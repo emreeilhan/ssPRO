@@ -1,5 +1,13 @@
 # CHANGELOGS
 
+## 0.0.17 - 2026-02-27
+- Added command-stack based Undo/Redo in `src/App.jsx` with bounded history (`past/future`, max 60 steps) for screenshot and layer mutations.
+- Added keyboard shortcuts for history navigation: `Cmd/Ctrl+Z` (undo), `Shift+Cmd/Ctrl+Z` and `Ctrl+Y` (redo).
+- Added header-level `Undo` and `Redo` controls with disabled state binding in `src/components/ScreenshotEditor.jsx`.
+- Refactored object URL lifecycle tracking to include active state plus history snapshots, ensuring image sources remain valid during undo/redo jumps.
+- Cleared undo/redo history on project load to prevent cross-project command contamination.
+- Verified the undo/redo integration with a successful production build using `npm run build`.
+
 ## 0.0.16 - 2026-02-27
 - Added project persistence workflow with `Save Project` and `Load Project` actions in the editor header.
 - Implemented portable JSON project format in `src/utils/projectPersistence.js` with schema/version validation for safer team handoff.

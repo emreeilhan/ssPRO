@@ -42,6 +42,10 @@ export default function ScreenshotEditor({
   onExportAll,
   onSaveProject,
   onLoadProject,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
   onToggleTheme,
 }) {
   const fileInputRef = useRef(null);
@@ -88,6 +92,22 @@ export default function ScreenshotEditor({
           </p>
         </div>
         <div className="flex items-center gap-2 md:justify-end">
+          <button
+            type="button"
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 disabled:opacity-40 dark:hover:bg-zinc-800"
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            onClick={onRedo}
+            disabled={!canRedo}
+            className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 disabled:opacity-40 dark:hover:bg-zinc-800"
+          >
+            Redo
+          </button>
           <button
             type="button"
             onClick={onSaveProject}

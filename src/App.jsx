@@ -542,6 +542,70 @@ export default function App() {
     });
   };
 
+  const canUndo = historyPast.length > 0;
+  const canRedo = historyFuture.length > 0;
+
+  const handleUndo = () => {
+    if (!canUndo) {
+      return;
+    }
+
+    const previous = historyPast[historyPast.length - 1];
+    const current = { screenshots, activeScreenshotId, selectedLayerId };
+
+    setHistoryPast((prev) => prev.slice(0, -1));
+    setHistoryFuture((prev) => [current, ...prev].slice(0, HISTORY_LIMIT));
+    setScreenshots(previous.screenshots);
+    setActiveScreenshotId(previous.activeScreenshotId);
+    setSelectedLayerId(previous.selectedLayerId);
+  };
+
+  const handleRedo = () => {
+    if (!canRedo) {
+      return;
+    }
+
+    const next = historyFuture[0];
+    const current = { screenshots, activeScreenshotId, selectedLayerId };
+
+    setHistoryFuture((prev) => prev.slice(1));
+    setHistoryPast((prev) => [...prev, current].slice(-HISTORY_LIMIT));
+    setScreenshots(next.screenshots);
+    setActiveScreenshotId(next.activeScreenshotId);
+    setSelectedLayerId(next.selectedLayerId);
+  };
+
+  useEffect(() => {
+    const handleKeydown = (event) => {
+      const isModifier = event.metaKey || event.ctrlKey;
+      if (!isModifier) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+
+      if (key === 'z' && event.shiftKey) {
+        event.preventDefault();
+        handleRedo();
+        return;
+      }
+
+      if (key === 'z') {
+        event.preventDefault();
+        handleUndo();
+        return;
+      }
+
+      if (key === 'y') {
+        event.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [canRedo, canUndo, handleRedo, handleUndo]);
+
   const handleExportSingle = async () => {
     if (!activeScreenshot || activeScreenshotIndex < 0) {
       return;
@@ -608,22 +672,10 @@ export default function App() {
       const parsed = JSON.parse(text);
       const hydrated = await hydrateProject(parsed);
 
-      for (const shot of screenshots) {
-        for (const layer of shot.layers) {
-          releaseObjectUrl(getImageSource(layer));
-          releaseObjectUrl(getMockupScreenSource(layer));
-        }
-      }
-
       const loadedScreenshots = hydrated.screenshots;
       setScreenshots(loadedScreenshots);
-
-      for (const shot of loadedScreenshots) {
-        for (const layer of shot.layers) {
-          retainObjectUrl(getImageSource(layer));
-          retainObjectUrl(getMockupScreenSource(layer));
-        }
-      }
+      setHistoryPast([]);
+      setHistoryFuture([]);
 
       const validActiveId = loadedScreenshots.some((item) => item.id === hydrated.activeScreenshotId)
         ? hydrated.activeScreenshotId
@@ -696,6 +748,10 @@ export default function App() {
       onExportAll={handleExportAll}
       onSaveProject={handleSaveProject}
       onLoadProject={handleLoadProject}
+      onUndo={handleUndo}
+      onRedo={handleRedo}
+      canUndo={canUndo}
+      canRedo={canRedo}
       onToggleTheme={toggleTheme}
     />
   );
