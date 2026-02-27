@@ -1,5 +1,12 @@
 # CHANGELOGS
 
+## 0.0.15 - 2026-02-27
+- Replaced image layer storage from base64 `dataUrl` strings to lightweight `object URL` references (`imageSrc`, `screenImageSrc`) in app state.
+- Added centralized object URL reference counting in `src/App.jsx` to prevent memory leaks across duplicate/delete/update flows.
+- Kept backward compatibility for legacy layers by resolving `dataUrl/screenDataUrl` as fallback sources during render/export.
+- Optimized export pipeline in `src/utils/exportScreenshots.js` by replacing `toDataURL -> atob -> Blob` with direct `Konva.Stage.toBlob()` output.
+- Verified the refactor with a successful production build using `npm run build`.
+
 ## 0.0.14 - 2026-02-27
 - Scanned the codebase and confirmed there are no source files above 1000 lines.
 - Modularized large code files for better maintainability and lower merge-conflict risk.

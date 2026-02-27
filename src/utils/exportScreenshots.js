@@ -1,28 +1,32 @@
 import JSZip from 'jszip';
 import Konva from 'konva';
 import { saveAs } from 'file-saver';
+import { getImageSource, getMockupScreenSource } from './imageSources';
 
 const resolveBlendMode = (value) => (value && value !== 'normal' ? value : 'source-over');
 
-function dataUrlToBlob(dataUrl) {
-  const [header, data] = dataUrl.split(',');
-  const mime = header.match(/:(.*?);/)[1];
-  const binary = atob(data);
-  const array = new Uint8Array(binary.length);
-
-  for (let i = 0; i < binary.length; i += 1) {
-    array[i] = binary.charCodeAt(i);
-  }
-
-  return new Blob([array], { type: mime });
-}
-
-function loadImage(dataUrl) {
+function loadImage(source) {
   return new Promise((resolve, reject) => {
     const image = new window.Image();
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error('Image load failed during export.'));
-    image.src = dataUrl;
+    image.src = source;
+  });
+}
+
+function stageToBlob(stage) {
+  return new Promise((resolve, reject) => {
+    stage.toBlob({
+      mimeType: 'image/png',
+      pixelRatio: 1,
+      callback: (blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+        reject(new Error('Failed to generate screenshot blob.'));
+      },
+    });
   });
 }
 
@@ -190,8 +194,9 @@ async function renderScreenshotBlob(screenshot, devicePreset) {
       continue;
     }
 
-    if (item.type === 'image' && item.dataUrl) {
-      const imageAsset = await loadImage(item.dataUrl);
+    const imageSource = getImageSource(item);
+    if (item.type === 'image' && imageSource) {
+      const imageAsset = await loadImage(imageSource);
       layer.add(
         new Konva.Image({
           image: imageAsset,
@@ -307,23 +312,21 @@ async function renderScreenshotBlob(screenshot, devicePreset) {
 
     if (item.type === 'mockup') {
       let screenAsset = null;
-      if (item.screenDataUrl) {
-        screenAsset = await loadImage(item.screenDataUrl);
+      const screenSource = getMockupScreenSource(item);
+      if (screenSource) {
+        screenAsset = await loadImage(screenSource);
       }
       drawMockup(item, layer, screenAsset);
     }
   }
 
   layer.draw();
-  const dataUrl = stage.toDataURL({
-    mimeType: 'image/png',
-    pixelRatio: 1,
-  });
+  const blob = await stageToBlob(stage);
 
   stage.destroy();
   tempContainer.remove();
 
-  return dataUrlToBlob(dataUrl);
+  return blob;
 }
 
 export async function exportSingleScreenshot({ screenshot, index, devicePreset }) {

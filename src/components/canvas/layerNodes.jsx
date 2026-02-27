@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useState } from 'react';
 import { Group, Image as KonvaImage, Rect } from 'react-konva';
+import { getImageSource, getMockupScreenSource } from '../../utils/imageSources';
 
 function drawRoundedRectPath(ctx, x, y, width, height, radius) {
   const r = Math.max(0, Math.min(radius, width / 2, height / 2));
@@ -47,7 +48,8 @@ export const ImageLayerNode = forwardRef(function ImageLayerNode(
   const [asset, setAsset] = useState(null);
 
   useEffect(() => {
-    if (!layer.dataUrl) {
+    const source = getImageSource(layer);
+    if (!source) {
       setAsset(null);
       return;
     }
@@ -61,12 +63,12 @@ export const ImageLayerNode = forwardRef(function ImageLayerNode(
       }
     };
 
-    image.src = layer.dataUrl;
+    image.src = source;
 
     return () => {
       isMounted = false;
     };
-  }, [layer.dataUrl]);
+  }, [layer.imageSrc, layer.dataUrl]);
 
   if (!asset) {
     return null;
@@ -98,7 +100,8 @@ export const MockupLayerNode = forwardRef(function MockupLayerNode(
   const metrics = getMockupMetrics(layer, scale);
 
   useEffect(() => {
-    if (!layer.screenDataUrl) {
+    const source = getMockupScreenSource(layer);
+    if (!source) {
       setScreenAsset(null);
       return;
     }
@@ -110,12 +113,12 @@ export const MockupLayerNode = forwardRef(function MockupLayerNode(
         setScreenAsset(image);
       }
     };
-    image.src = layer.screenDataUrl;
+    image.src = source;
 
     return () => {
       mounted = false;
     };
-  }, [layer.screenDataUrl]);
+  }, [layer.screenImageSrc, layer.screenDataUrl]);
 
   const { width, height, bezel, cornerRadius, style } = metrics;
 

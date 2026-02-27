@@ -3,8 +3,9 @@ import ScreenshotEditor from './components/ScreenshotEditor';
 import { DEVICE_PRESET, EXPORT_LOCALES, MIN_SCREENSHOTS } from './constants';
 import { useThemePreference } from './hooks/useThemePreference';
 import { exportAllScreenshots, exportSingleScreenshot } from './utils/exportScreenshots';
+import { getImageSource, getMockupScreenSource } from './utils/imageSources';
 import { getLayerWarnings } from './utils/layerChecks';
-import { readFileAsDataURL, readImageDimensions } from './utils/imageFileUtils';
+import { createObjectURL, readImageDimensions } from './utils/imageFileUtils';
 import { buildDecorPreset, buildMockupPreset } from './utils/layerPresets';
 import {
   buildEmptyScreenshot,
@@ -22,6 +23,7 @@ export default function App() {
 
   const screenshotIdRef = useRef(MIN_SCREENSHOTS + 1);
   const layerIdRef = useRef(1);
+  const objectUrlRefCountRef = useRef(new Map());
 
   const activeScreenshotIndex = screenshots.findIndex((item) => item.id === activeScreenshotId);
   const activeScreenshot =
@@ -56,6 +58,42 @@ export default function App() {
   }, [activeScreenshot, selectedLayerId]);
 
   const allocateLayerId = () => `layer_${layerIdRef.current++}`;
+
+  const retainObjectUrl = (url) => {
+    if (!url) {
+      return;
+    }
+
+    const refs = objectUrlRefCountRef.current;
+    refs.set(url, (refs.get(url) || 0) + 1);
+  };
+
+  const releaseObjectUrl = (url) => {
+    if (!url) {
+      return;
+    }
+
+    const refs = objectUrlRefCountRef.current;
+    const count = refs.get(url) || 0;
+
+    if (count <= 1) {
+      refs.delete(url);
+      window.URL.revokeObjectURL(url);
+      return;
+    }
+
+    refs.set(url, count - 1);
+  };
+
+  useEffect(
+    () => () => {
+      for (const url of objectUrlRefCountRef.current.keys()) {
+        window.URL.revokeObjectURL(url);
+      }
+      objectUrlRefCountRef.current.clear();
+    },
+    [],
+  );
 
   const updateActiveScreenshot = (updater) => {
     setScreenshots((prev) =>
@@ -94,6 +132,11 @@ export default function App() {
       })),
     };
 
+    for (const layer of clone.layers) {
+      retainObjectUrl(getImageSource(layer));
+      retainObjectUrl(getMockupScreenSource(layer));
+    }
+
     setScreenshots((prev) => {
       const sourceIndex = prev.findIndex((item) => item.id === activeScreenshot.id);
       if (sourceIndex < 0) {
@@ -110,6 +153,11 @@ export default function App() {
   const handleDeleteScreenshot = () => {
     if (!activeScreenshot || screenshots.length <= 1) {
       return;
+    }
+
+    for (const layer of activeScreenshot.layers) {
+      releaseObjectUrl(getImageSource(layer));
+      releaseObjectUrl(getMockupScreenSource(layer));
     }
 
     const index = activeScreenshotIndex;
@@ -198,8 +246,14 @@ export default function App() {
     const parsedLayers = [];
 
     for (const file of files) {
-      const dataUrl = await readFileAsDataURL(file);
-      const dimensions = await readImageDimensions(dataUrl);
+      const imageSrc = createObjectURL(file);
+      let dimensions;
+      try {
+        dimensions = await readImageDimensions(imageSrc);
+      } catch (error) {
+        window.URL.revokeObjectURL(imageSrc);
+        throw error;
+      }
       const fitRatio = Math.min(
         (DEVICE_PRESET.width * 0.92) / dimensions.width,
         (DEVICE_PRESET.height * 0.92) / dimensions.height,
@@ -217,13 +271,14 @@ export default function App() {
         locked: false,
         blendMode: 'normal',
         opacity: 1,
-        dataUrl,
+        imageSrc,
         x: Math.round((DEVICE_PRESET.width - layerWidth) / 2),
         y: Math.round((DEVICE_PRESET.height - layerHeight) / 2),
         width: layerWidth,
         height: layerHeight,
         rotation: 0,
       });
+      retainObjectUrl(imageSrc);
     }
 
     updateActiveScreenshot((item) => ({
@@ -300,8 +355,10 @@ export default function App() {
         screenBg: preset.screenBg,
         shadowBlur: preset.shadowBlur,
         shadowOpacity: preset.shadowOpacity,
-        screenDataUrl: lastImageLayer?.dataUrl || null,
+        screenImageSrc: getImageSource(lastImageLayer),
       };
+
+      retainObjectUrl(nextLayer.screenImageSrc);
 
       return {
         ...item,
@@ -317,22 +374,54 @@ export default function App() {
       return;
     }
 
-    const dataUrl = await readFileAsDataURL(file);
-    handleLayerUpdate(layerId, { screenDataUrl: dataUrl });
+    const screenImageSrc = createObjectURL(file);
+    handleLayerUpdate(layerId, { screenImageSrc });
   };
 
   const handleLayerUpdate = (layerId, patch) => {
-    updateActiveScreenshot((item) => ({
-      ...item,
-      layers: item.layers.map((layer) => (layer.id === layerId ? { ...layer, ...patch } : layer)),
-    }));
+    updateActiveScreenshot((item) => {
+      const currentLayer = item.layers.find((layer) => layer.id === layerId);
+
+      if (!currentLayer) {
+        return item;
+      }
+
+      const nextLayer = { ...currentLayer, ...patch };
+      const currentImageSrc = getImageSource(currentLayer);
+      const nextImageSrc = getImageSource(nextLayer);
+      const currentScreenSrc = getMockupScreenSource(currentLayer);
+      const nextScreenSrc = getMockupScreenSource(nextLayer);
+
+      if (currentImageSrc !== nextImageSrc) {
+        releaseObjectUrl(currentImageSrc);
+        retainObjectUrl(nextImageSrc);
+      }
+
+      if (currentScreenSrc !== nextScreenSrc) {
+        releaseObjectUrl(currentScreenSrc);
+        retainObjectUrl(nextScreenSrc);
+      }
+
+      return {
+        ...item,
+        layers: item.layers.map((layer) => (layer.id === layerId ? nextLayer : layer)),
+      };
+    });
   };
 
   const handleLayerDelete = (layerId) => {
-    updateActiveScreenshot((item) => ({
-      ...item,
-      layers: item.layers.filter((layer) => layer.id !== layerId),
-    }));
+    updateActiveScreenshot((item) => {
+      const currentLayer = item.layers.find((layer) => layer.id === layerId);
+      if (currentLayer) {
+        releaseObjectUrl(getImageSource(currentLayer));
+        releaseObjectUrl(getMockupScreenSource(currentLayer));
+      }
+
+      return {
+        ...item,
+        layers: item.layers.filter((layer) => layer.id !== layerId),
+      };
+    });
 
     if (selectedLayerId === layerId) {
       setSelectedLayerId(null);
@@ -373,6 +462,9 @@ export default function App() {
         x: Math.round((source.x || 0) + 26),
         y: Math.round((source.y || 0) + 26),
       };
+
+      retainObjectUrl(getImageSource(copy));
+      retainObjectUrl(getMockupScreenSource(copy));
 
       const nextLayers = [...item.layers];
       nextLayers.splice(index + 1, 0, copy);
