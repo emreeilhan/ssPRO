@@ -1,5 +1,11 @@
 # CHANGELOGS
 
+## 0.0.28 - 2026-02-27
+- Refactored inspector form in `src/components/LayerPanel.jsx` into accordion sections for `Transform`, `Appearance`, and `Type Specific` controls.
+- Added reusable `AccordionSection` UI block with collapse/expand behavior and section state management.
+- Preserved existing control behaviors while reducing long-form visual load and improving edit focus.
+- Verified accordion inspector integration with a successful production build using `npm run build`.
+
 ## 0.0.27 - 2026-02-27
 - Added visible mini navigation controls (`Prev` / `Next`) on top of the editable canvas in `src/components/CanvasStage.jsx`.
 - Wired controls to existing screenshot cycle handlers used by horizontal wheel navigation for consistent behavior.

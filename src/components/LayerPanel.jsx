@@ -14,6 +14,12 @@ const blendModes = [
   { label: 'Color Dodge', value: 'color-dodge' },
   { label: 'Color Burn', value: 'color-burn' },
 ];
+const layerTypeMeta = {
+  text: { icon: 'TXT', tone: 'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-200 dark:bg-blue-900/30 dark:border-blue-700/60' },
+  image: { icon: 'IMG', tone: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-700/60' },
+  mockup: { icon: 'MCK', tone: 'text-violet-700 bg-violet-50 border-violet-200 dark:text-violet-200 dark:bg-violet-900/30 dark:border-violet-700/60' },
+  shape: { icon: 'SHP', tone: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-200 dark:bg-amber-900/30 dark:border-amber-700/60' },
+};
 
 function Field({ label, children }) {
   return (
@@ -90,6 +96,10 @@ export default function LayerPanel({
           )}
           {orderedLayers.map((layer) => {
             const isSelected = selectedLayerId === layer.id;
+            const meta = layerTypeMeta[layer.type] || {
+              icon: 'LYR',
+              tone: 'text-zinc-700 bg-zinc-50 border-zinc-200 dark:text-zinc-200 dark:bg-zinc-800 dark:border-zinc-700',
+            };
 
             return (
               <div
@@ -103,9 +113,26 @@ export default function LayerPanel({
                   onClick={() => onSelectLayer(layer.id)}
                   className="text-left"
                 >
-                  <div className="text-sm leading-4">{layer.name}</div>
-                  <div className="mono text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                    {layer.type}{layer.locked ? ' • locked' : ''}
+                  <div className="flex items-center gap-1.5">
+                    <span className={`mono inline-flex min-w-8 items-center justify-center border px-1 py-0.5 text-[10px] uppercase tracking-wide ${meta.tone}`}>
+                      {meta.icon}
+                    </span>
+                    <span className="text-sm leading-4">{layer.name}</span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-1">
+                    <span className="mono text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      {layer.type}
+                    </span>
+                    {layer.locked && (
+                      <span className="mono inline-flex items-center border border-zinc-300 bg-zinc-100 px-1 py-0.5 text-[10px] uppercase tracking-wide text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                        Locked
+                      </span>
+                    )}
+                    {layer.visible === false && (
+                      <span className="mono inline-flex items-center border border-red-300 bg-red-50 px-1 py-0.5 text-[10px] uppercase tracking-wide text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
+                        Hidden
+                      </span>
+                    )}
                   </div>
                 </button>
                 <div className="flex gap-1">
