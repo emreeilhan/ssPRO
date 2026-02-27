@@ -1,10 +1,4 @@
-export const readFileAsDataURL = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('File read failed.'));
-    reader.readAsDataURL(file);
-  });
+export const createObjectURL = (file) => window.URL.createObjectURL(file);
 
 export const readImageDimensions = (source) =>
   new Promise((resolve, reject) => {

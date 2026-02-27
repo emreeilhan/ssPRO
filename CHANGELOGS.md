@@ -1,5 +1,12 @@
 # CHANGELOGS
 
+## 0.0.14 - 2026-02-27
+- Scanned the codebase and confirmed there are no source files above 1000 lines.
+- Modularized large code files for better maintainability and lower merge-conflict risk.
+- Refactored `src/App.jsx` from 666 lines to 510 lines by extracting image/file helpers, screenshot helpers, layer presets, and theme preference behavior into dedicated modules.
+- Refactored `src/components/CanvasStage.jsx` from 663 lines to 215 lines by extracting canvas layer nodes, layer rendering branches, and transform logic into `src/components/canvas/`.
+- Verified the refactor with a successful production build using `npm run build`.
+
 ## 0.0.13 - 2026-02-27
 - Added advanced layer engine controls: lock/unlock, duplicate layer, and one-click alignment (`Center X`, `Center Y`, `Center Both`).
 - Added universal per-layer visual controls: opacity and blend mode (normal, multiply, screen, overlay, soft/hard light, darken/lighten, color dodge/burn).

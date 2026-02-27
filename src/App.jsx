@@ -1,80 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ScreenshotEditor from './components/ScreenshotEditor';
 import { DEVICE_PRESET, EXPORT_LOCALES, MIN_SCREENSHOTS } from './constants';
+import { useThemePreference } from './hooks/useThemePreference';
 import { exportAllScreenshots, exportSingleScreenshot } from './utils/exportScreenshots';
 import { getLayerWarnings } from './utils/layerChecks';
-
-const readFileAsDataURL = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('File read failed.'));
-    reader.readAsDataURL(file);
-  });
-
-const readImageDimensions = (source) =>
-  new Promise((resolve, reject) => {
-    const image = new window.Image();
-    image.onload = () => resolve({ width: image.width, height: image.height });
-    image.onerror = () => reject(new Error('Image decode failed.'));
-    image.src = source;
-  });
-
-const buildEmptyScreenshot = (id) => ({
-  id,
-  backgroundColor: '#ffffff',
-  layers: [],
-});
-
-const createInitialScreenshots = () =>
-  Array.from({ length: MIN_SCREENSHOTS }, (_, index) => buildEmptyScreenshot(index + 1));
-
-const reorderByIndex = (items, fromIndex, toIndex) => {
-  const next = [...items];
-  const [moved] = next.splice(fromIndex, 1);
-  next.splice(toIndex, 0, moved);
-  return next;
-};
-
-const estimateLayerHeight = (layer) => {
-  if (!layer) {
-    return 0;
-  }
-
-  if (typeof layer.height === 'number') {
-    return layer.height;
-  }
-
-  if (layer.type === 'text') {
-    const text = layer.text || '';
-    const lines = text.split('\n').length || 1;
-    return Math.max(40, (layer.fontSize || 64) * 1.1 * lines);
-  }
-
-  return 0;
-};
-
-const THEME_STORAGE_KEY = 'sspro-theme';
-
-const getInitialTheme = () => {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
-
-  const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  if (savedTheme === 'dark' || savedTheme === 'light') {
-    return savedTheme;
-  }
-
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-};
+import { readFileAsDataURL, readImageDimensions } from './utils/imageFileUtils';
+import { buildDecorPreset, buildMockupPreset } from './utils/layerPresets';
+import {
+  buildEmptyScreenshot,
+  createInitialScreenshots,
+  estimateLayerHeight,
+  reorderByIndex,
+} from './utils/screenshotHelpers';
 
 export default function App() {
   const [screenshots, setScreenshots] = useState(createInitialScreenshots);
   const [activeScreenshotId, setActiveScreenshotId] = useState(1);
   const [selectedLayerId, setSelectedLayerId] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [theme, setTheme] = useState(getInitialTheme);
+  const { isDarkMode, toggleTheme } = useThemePreference();
 
   const screenshotIdRef = useRef(MIN_SCREENSHOTS + 1);
   const layerIdRef = useRef(1);
@@ -84,8 +28,6 @@ export default function App() {
     activeScreenshotIndex >= 0 ? screenshots[activeScreenshotIndex] : screenshots[0] || null;
 
   const selectedLayer = activeScreenshot?.layers.find((layer) => layer.id === selectedLayerId) || null;
-  const isDarkMode = theme === 'dark';
-
   const warnings = useMemo(
     () => getLayerWarnings(activeScreenshot, DEVICE_PRESET),
     [activeScreenshot],
@@ -112,11 +54,6 @@ export default function App() {
       setSelectedLayerId(null);
     }
   }, [activeScreenshot, selectedLayerId]);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [isDarkMode, theme]);
 
   const allocateLayerId = () => `layer_${layerIdRef.current++}`;
 
@@ -297,52 +234,6 @@ export default function App() {
     setSelectedLayerId(parsedLayers[parsedLayers.length - 1].id);
   };
 
-  const buildDecorPreset = (kind) => {
-    const presets = {
-      orb: {
-        shapeKind: 'orb',
-        color: '#6fa8ff',
-        color2: '#d6e5ff',
-        opacity: 0.36,
-        blur: 28,
-        width: 440,
-        height: 440,
-      },
-      ring: {
-        shapeKind: 'ring',
-        color: '#145bff',
-        color2: '#8bb0ff',
-        opacity: 0.6,
-        blur: 10,
-        strokeWidth: 26,
-        width: 420,
-        height: 420,
-      },
-      pill: {
-        shapeKind: 'pill',
-        color: '#111827',
-        color2: '#4b5563',
-        opacity: 0.2,
-        blur: 0,
-        cornerRadius: 180,
-        width: 520,
-        height: 180,
-      },
-      glow: {
-        shapeKind: 'glow',
-        color: '#ff65a3',
-        color2: '#ffd166',
-        opacity: 0.34,
-        blur: 34,
-        cornerRadius: 28,
-        width: 500,
-        height: 260,
-      },
-    };
-
-    return presets[kind] || presets.orb;
-  };
-
   const handleAddDecorLayer = (kind = 'orb') => {
     const layerId = allocateLayerId();
     const preset = buildDecorPreset(kind);
@@ -378,49 +269,6 @@ export default function App() {
     });
 
     setSelectedLayerId(layerId);
-  };
-
-  const buildMockupPreset = (style) => {
-    const presets = {
-      realistic: {
-        mockupStyle: 'realistic',
-        width: 820,
-        height: 1680,
-        bezel: 26,
-        cornerRadius: 120,
-        frameColor: '#0f172a',
-        accentColor: '#334155',
-        screenBg: '#0b0b0b',
-        shadowBlur: 46,
-        shadowOpacity: 0.34,
-      },
-      flat: {
-        mockupStyle: 'flat',
-        width: 800,
-        height: 1640,
-        bezel: 16,
-        cornerRadius: 54,
-        frameColor: '#0f172a',
-        accentColor: '#0f172a',
-        screenBg: '#0b0b0b',
-        shadowBlur: 0,
-        shadowOpacity: 0,
-      },
-      rounded: {
-        mockupStyle: 'rounded',
-        width: 810,
-        height: 1660,
-        bezel: 22,
-        cornerRadius: 164,
-        frameColor: '#f8fafc',
-        accentColor: '#dbeafe',
-        screenBg: '#0b0b0b',
-        shadowBlur: 30,
-        shadowOpacity: 0.24,
-      },
-    };
-
-    return presets[style] || presets.realistic;
   };
 
   const handleAddMockupLayer = (style = 'realistic') => {
@@ -621,10 +469,6 @@ export default function App() {
     }
   };
 
-  const handleThemeToggle = () => {
-    setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
-  };
-
   return (
     <ScreenshotEditor
       devicePreset={DEVICE_PRESET}
@@ -660,7 +504,7 @@ export default function App() {
       onMoveLayer={handleMoveLayer}
       onExportSingle={handleExportSingle}
       onExportAll={handleExportAll}
-      onToggleTheme={handleThemeToggle}
+      onToggleTheme={toggleTheme}
     />
   );
 }
