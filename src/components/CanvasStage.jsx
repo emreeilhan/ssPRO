@@ -1,5 +1,7 @@
 import { forwardRef, useEffect, useRef, useState } from 'react';
-import { Ellipse, Image as KonvaImage, Layer, Rect, Stage, Text, Transformer } from 'react-konva';
+import { Ellipse, Group, Image as KonvaImage, Layer, Rect, Stage, Text, Transformer } from 'react-konva';
+
+const resolveBlendMode = (value) => (value && value !== 'normal' ? value : 'source-over');
 
 const ImageLayerNode = forwardRef(function ImageLayerNode({ layer, scale, onSelect, onDragEnd, onTransformEnd }, ref) {
   const [asset, setAsset] = useState(null);
@@ -38,13 +40,191 @@ const ImageLayerNode = forwardRef(function ImageLayerNode({ layer, scale, onSele
       y={layer.y * scale}
       width={layer.width * scale}
       height={layer.height * scale}
+      opacity={layer.opacity ?? 1}
+      globalCompositeOperation={resolveBlendMode(layer.blendMode)}
       rotation={layer.rotation || 0}
-      draggable
+      draggable={!layer.locked}
       onClick={onSelect}
       onTap={onSelect}
       onDragEnd={onDragEnd}
       onTransformEnd={onTransformEnd}
     />
+  );
+});
+
+function drawRoundedRectPath(ctx, x, y, width, height, radius) {
+  const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function getMockupMetrics(layer, scale) {
+  const width = layer.width * scale;
+  const height = layer.height * scale;
+  const bezel = (layer.bezel || 20) * scale;
+  const cornerRadius = (layer.cornerRadius || 84) * scale;
+  const style = layer.mockupStyle || 'realistic';
+  const topInset = style === 'realistic' ? bezel * 1.7 : bezel * 1.4;
+  const sideInset = bezel;
+  const bottomInset = bezel * 1.2;
+
+  return {
+    style,
+    width,
+    height,
+    bezel,
+    cornerRadius,
+    screenX: sideInset,
+    screenY: topInset,
+    screenWidth: Math.max(40, width - sideInset * 2),
+    screenHeight: Math.max(60, height - topInset - bottomInset),
+    screenCornerRadius: Math.max(12, cornerRadius - bezel * 0.8),
+  };
+}
+
+const MockupLayerNode = forwardRef(function MockupLayerNode(
+  { layer, scale, onSelect, onDragEnd, onTransformEnd },
+  ref,
+) {
+  const [screenAsset, setScreenAsset] = useState(null);
+  const metrics = getMockupMetrics(layer, scale);
+
+  useEffect(() => {
+    if (!layer.screenDataUrl) {
+      setScreenAsset(null);
+      return;
+    }
+
+    let mounted = true;
+    const image = new window.Image();
+    image.onload = () => {
+      if (mounted) {
+        setScreenAsset(image);
+      }
+    };
+    image.src = layer.screenDataUrl;
+
+    return () => {
+      mounted = false;
+    };
+  }, [layer.screenDataUrl]);
+
+  const { width, height, bezel, cornerRadius, style } = metrics;
+
+  const notchWidth = style === 'flat' ? 0 : width * 0.26;
+  const notchHeight = style === 'realistic' ? bezel * 0.7 : bezel * 0.52;
+  const notchX = (width - notchWidth) / 2;
+  const notchY = bezel * 0.38;
+
+  let screenImageProps = null;
+  if (screenAsset) {
+    const fitRatio = Math.max(
+      metrics.screenWidth / screenAsset.width,
+      metrics.screenHeight / screenAsset.height,
+    );
+    const drawWidth = screenAsset.width * fitRatio;
+    const drawHeight = screenAsset.height * fitRatio;
+
+    screenImageProps = {
+      image: screenAsset,
+      x: (metrics.screenWidth - drawWidth) / 2,
+      y: (metrics.screenHeight - drawHeight) / 2,
+      width: drawWidth,
+      height: drawHeight,
+    };
+  }
+
+  return (
+    <Group
+      ref={ref}
+      x={layer.x * scale}
+      y={layer.y * scale}
+      width={width}
+      height={height}
+      opacity={layer.opacity ?? 1}
+      globalCompositeOperation={resolveBlendMode(layer.blendMode)}
+      draggable={!layer.locked}
+      rotation={layer.rotation || 0}
+      onClick={onSelect}
+      onTap={onSelect}
+      onDragEnd={onDragEnd}
+      onTransformEnd={onTransformEnd}
+    >
+      <Rect x={0} y={0} width={width} height={height} fill="rgba(0,0,0,0.001)" />
+
+      <Rect
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        cornerRadius={cornerRadius}
+        fill={layer.frameColor || '#0f172a'}
+        shadowColor="#0f172a"
+        shadowBlur={(layer.shadowBlur || 0) * scale}
+        shadowOpacity={layer.shadowOpacity || 0}
+        shadowOffsetY={style === 'flat' ? 0 : 12 * scale}
+      />
+
+      {style !== 'flat' && (
+        <Rect
+          x={bezel * 0.35}
+          y={bezel * 0.35}
+          width={width - bezel * 0.7}
+          height={height - bezel * 0.7}
+          cornerRadius={Math.max(10, cornerRadius - bezel * 0.45)}
+          stroke={layer.accentColor || '#334155'}
+          strokeWidth={style === 'realistic' ? 1.6 * scale : 1.2 * scale}
+          opacity={style === 'realistic' ? 0.65 : 0.5}
+        />
+      )}
+
+      <Group
+        x={metrics.screenX}
+        y={metrics.screenY}
+        clipFunc={(ctx) =>
+          drawRoundedRectPath(
+            ctx,
+            0,
+            0,
+            metrics.screenWidth,
+            metrics.screenHeight,
+            metrics.screenCornerRadius,
+          )
+        }
+      >
+        <Rect
+          x={0}
+          y={0}
+          width={metrics.screenWidth}
+          height={metrics.screenHeight}
+          cornerRadius={metrics.screenCornerRadius}
+          fill={layer.screenBg || '#0b0b0b'}
+        />
+
+        {screenImageProps && <KonvaImage {...screenImageProps} />}
+      </Group>
+
+      {style !== 'flat' && (
+        <Rect
+          x={notchX}
+          y={notchY}
+          width={notchWidth}
+          height={notchHeight}
+          cornerRadius={notchHeight / 2}
+          fill={style === 'rounded' ? '#94a3b8' : '#020617'}
+          opacity={0.95}
+        />
+      )}
+    </Group>
   );
 });
 
@@ -55,12 +235,17 @@ export default function CanvasStage({
   onSelectLayer,
   onLayerUpdate,
   onAddImageLayers,
+  onCyclePrevScreenshot,
+  onCycleNextScreenshot,
 }) {
   const frameRef = useRef(null);
   const transformerRef = useRef(null);
   const nodeRefs = useRef({});
   const [canvasWrapWidth, setCanvasWrapWidth] = useState(620);
   const [isDragActive, setIsDragActive] = useState(false);
+  const wheelDeltaRef = useRef(0);
+  const wheelLockRef = useRef(false);
+  const wheelUnlockTimerRef = useRef(null);
 
   useEffect(() => {
     const element = frameRef.current;
@@ -84,9 +269,19 @@ export default function CanvasStage({
     };
   }, []);
 
+  useEffect(
+    () => () => {
+      if (wheelUnlockTimerRef.current) {
+        window.clearTimeout(wheelUnlockTimerRef.current);
+      }
+    },
+    [],
+  );
+
   const previewWidth = Math.min(Math.max(canvasWrapWidth - 20, 280), 480);
   const previewScale = previewWidth / devicePreset.width;
   const previewHeight = devicePreset.height * previewScale;
+  const selectedLayer = screenshot.layers.find((layer) => layer.id === selectedLayerId);
 
   useEffect(() => {
     const transformer = transformerRef.current;
@@ -95,9 +290,10 @@ export default function CanvasStage({
     }
 
     const selectedNode = selectedLayerId ? nodeRefs.current[selectedLayerId] : null;
-    transformer.nodes(selectedNode ? [selectedNode] : []);
+    const canTransform = selectedNode && selectedLayer && !selectedLayer.locked;
+    transformer.nodes(canTransform ? [selectedNode] : []);
     transformer.getLayer()?.batchDraw();
-  }, [selectedLayerId, screenshot.layers, previewScale]);
+  }, [selectedLayerId, selectedLayer, screenshot.layers, previewScale]);
 
   const setNodeRef = (layerId, node) => {
     if (node) {
@@ -171,6 +367,17 @@ export default function CanvasStage({
         height: nextHeight,
         rotation: Number(node.rotation().toFixed(2)),
       });
+      return;
+    }
+
+    if (layer.type === 'mockup') {
+      onLayerUpdate(layer.id, {
+        x: Math.round(node.x() / previewScale),
+        y: Math.round(node.y() / previewScale),
+        width: Math.max(180, Math.round((node.width() * scaleX) / previewScale)),
+        height: Math.max(300, Math.round((node.height() * scaleY) / previewScale)),
+        rotation: Number(node.rotation().toFixed(2)),
+      });
     }
   };
 
@@ -194,9 +401,47 @@ export default function CanvasStage({
     }
   };
 
+  const handleCanvasWheel = (event) => {
+    const horizontalDelta =
+      Math.abs(event.deltaX) > Math.abs(event.deltaY)
+        ? event.deltaX
+        : event.shiftKey
+          ? event.deltaY
+          : 0;
+
+    if (!horizontalDelta) {
+      return;
+    }
+
+    event.preventDefault();
+    wheelDeltaRef.current += horizontalDelta;
+
+    if (wheelLockRef.current || Math.abs(wheelDeltaRef.current) < 45) {
+      return;
+    }
+
+    if (wheelDeltaRef.current > 0) {
+      onCycleNextScreenshot?.();
+    } else {
+      onCyclePrevScreenshot?.();
+    }
+
+    wheelDeltaRef.current = 0;
+    wheelLockRef.current = true;
+
+    if (wheelUnlockTimerRef.current) {
+      window.clearTimeout(wheelUnlockTimerRef.current);
+    }
+
+    wheelUnlockTimerRef.current = window.setTimeout(() => {
+      wheelLockRef.current = false;
+    }, 180);
+  };
+
   return (
     <div
       ref={frameRef}
+      onWheel={handleCanvasWheel}
       onDragOver={(event) => {
         event.preventDefault();
         setIsDragActive(true);
@@ -257,10 +502,12 @@ export default function CanvasStage({
                     fontSize={(layer.fontSize || 64) * previewScale}
                     lineHeight={layer.lineHeight || 1.1}
                     fill={layer.color || '#101010'}
+                    opacity={layer.opacity ?? 1}
+                    globalCompositeOperation={resolveBlendMode(layer.blendMode)}
                     align={layer.align || 'left'}
                     fontFamily={layer.fontFamily || 'IBM Plex Sans'}
                     rotation={layer.rotation || 0}
-                    draggable
+                    draggable={!layer.locked}
                     onClick={sharedProps.onSelect}
                     onTap={sharedProps.onSelect}
                     onDragEnd={sharedProps.onDragEnd}
@@ -287,8 +534,9 @@ export default function CanvasStage({
                     shadowColor={layer.color || '#6fa8ff'}
                     shadowBlur={(layer.blur || 28) * previewScale}
                     shadowOpacity={0.45}
+                    globalCompositeOperation={resolveBlendMode(layer.blendMode)}
                     rotation={layer.rotation || 0}
-                    draggable
+                    draggable={!layer.locked}
                     onClick={sharedProps.onSelect}
                     onTap={sharedProps.onSelect}
                     onDragEnd={(event) => {
@@ -318,8 +566,9 @@ export default function CanvasStage({
                     shadowColor={layer.color2 || layer.color || '#145bff'}
                     shadowBlur={(layer.blur || 10) * previewScale}
                     shadowOpacity={0.5}
+                    globalCompositeOperation={resolveBlendMode(layer.blendMode)}
                     rotation={layer.rotation || 0}
-                    draggable
+                    draggable={!layer.locked}
                     onClick={sharedProps.onSelect}
                     onTap={sharedProps.onSelect}
                     onDragEnd={(event) => {
@@ -348,8 +597,9 @@ export default function CanvasStage({
                     fillLinearGradientEndPoint={{ x: layer.width * previewScale, y: 0 }}
                     fillLinearGradientColorStops={[0, layer.color || '#111827', 1, layer.color2 || '#4b5563']}
                     opacity={layer.opacity ?? 0.2}
+                    globalCompositeOperation={resolveBlendMode(layer.blendMode)}
                     rotation={layer.rotation || 0}
-                    draggable
+                    draggable={!layer.locked}
                     onClick={sharedProps.onSelect}
                     onTap={sharedProps.onSelect}
                     onDragEnd={sharedProps.onDragEnd}
@@ -375,10 +625,25 @@ export default function CanvasStage({
                     shadowColor={layer.color || '#ff65a3'}
                     shadowBlur={(layer.blur || 34) * previewScale}
                     shadowOpacity={0.7}
+                    globalCompositeOperation={resolveBlendMode(layer.blendMode)}
                     rotation={layer.rotation || 0}
-                    draggable
+                    draggable={!layer.locked}
                     onClick={sharedProps.onSelect}
                     onTap={sharedProps.onSelect}
+                    onDragEnd={sharedProps.onDragEnd}
+                    onTransformEnd={sharedProps.onTransformEnd}
+                  />
+                );
+              }
+
+              if (layer.type === 'mockup') {
+                return (
+                  <MockupLayerNode
+                    key={layer.id}
+                    ref={(node) => setNodeRef(layer.id, node)}
+                    layer={layer}
+                    scale={previewScale}
+                    onSelect={sharedProps.onSelect}
                     onDragEnd={sharedProps.onDragEnd}
                     onTransformEnd={sharedProps.onTransformEnd}
                   />
@@ -405,7 +670,7 @@ export default function CanvasStage({
       </div>
 
       <p className="mono mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-        Drag PNG/JPG files here or use upload button. Resize via transform handles.
+        Drag PNG/JPG files here or use upload button. Resize via transform handles. Horizontal scroll changes screenshot.
       </p>
     </div>
   );

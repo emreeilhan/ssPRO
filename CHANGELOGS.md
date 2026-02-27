@@ -1,5 +1,33 @@
 # CHANGELOGS
 
+## 0.0.13 - 2026-02-27
+- Added advanced layer engine controls: lock/unlock, duplicate layer, and one-click alignment (`Center X`, `Center Y`, `Center Both`).
+- Added universal per-layer visual controls: opacity and blend mode (normal, multiply, screen, overlay, soft/hard light, darken/lighten, color dodge/burn).
+- Applied lock behavior to canvas interactions by disabling drag/transform for locked layers.
+- Synced blend mode and opacity rendering across both editor preview and export pipeline for image/text/shape/mockup layers.
+
+## 0.0.12 - 2026-02-27
+- Reverted screenshot list UI back to previous vertical sidebar layout.
+- Implemented screenshot switching on canvas via horizontal scroll gesture with infinite cycling behavior.
+- Added looped navigation logic so scrolling right advances `01 -> 02 -> 03` and wraps from the last screenshot to the first.
+
+## 0.0.11 - 2026-02-27
+- Added new mockup layer system with three presets: `realistic`, `flat`, and `rounded`.
+- Added toolbar actions to insert each mockup style directly into the editor.
+- Added mockup screen image support via auto-pick from latest image layer and manual upload in inspector.
+- Added mockup controls for style, frame/accent colors, bezel, and corner radius.
+- Extended both canvas preview and full-resolution export renderer to include mockup layers and embedded screens.
+
+## 0.0.10 - 2026-02-27
+- Reworked screenshot navigator into a horizontal, scrollable carousel for faster sequence browsing.
+- Added infinite-loop style scrolling behavior so horizontal movement continues fluidly across screenshot cards.
+- Synced active screenshot selection to the centered card while scrolling, enabling natural `02 -> 03 -> 04` progression.
+- Updated reorder controls to left/right semantics to match horizontal navigation direction.
+
+## 0.0.09 - 2026-02-27
+- Added comprehensive PRD document (`PRD.md`) describing product purpose, scope, requirements, metrics, risks, and acceptance criteria.
+- Captured current codebase capabilities in a structured product format for planning and stakeholder alignment.
+
 ## 0.0.08 - 2026-02-27
 - Added a production-ready `.gitignore` tuned for Vite/React projects.
 - Excluded dependency, build, cache, env, editor, and test artifact files from version control.

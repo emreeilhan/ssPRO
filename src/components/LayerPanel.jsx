@@ -1,6 +1,19 @@
+import { useRef } from 'react';
 import { TEXT_FONT_OPTIONS } from '../constants';
 
 const alignmentModes = ['left', 'center', 'right'];
+const blendModes = [
+  { label: 'Normal', value: 'normal' },
+  { label: 'Multiply', value: 'multiply' },
+  { label: 'Screen', value: 'screen' },
+  { label: 'Overlay', value: 'overlay' },
+  { label: 'Soft Light', value: 'soft-light' },
+  { label: 'Hard Light', value: 'hard-light' },
+  { label: 'Darken', value: 'darken' },
+  { label: 'Lighten', value: 'lighten' },
+  { label: 'Color Dodge', value: 'color-dodge' },
+  { label: 'Color Burn', value: 'color-burn' },
+];
 
 function Field({ label, children }) {
   return (
@@ -19,14 +32,19 @@ export default function LayerPanel({
   warnings,
   onSelectLayer,
   onLayerUpdate,
+  onMockupScreenUpload,
   onLayerDelete,
   onLayerVisibility,
+  onLayerLockToggle,
+  onDuplicateLayer,
+  onAlignLayer,
   onMoveLayer,
   onExportSingle,
   onExportAll,
 }) {
   const orderedLayers = [...screenshot.layers].reverse();
   const selectedWarnings = warnings.filter((item) => item.layerId === selectedLayerId);
+  const mockupUploadRef = useRef(null);
 
   return (
     <aside className="panel animate-reveal border p-3" style={{ animationDelay: '200ms' }}>
@@ -58,7 +76,9 @@ export default function LayerPanel({
                   className="text-left"
                 >
                   <div className="text-sm leading-4">{layer.name}</div>
-                  <div className="mono text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{layer.type}</div>
+                  <div className="mono text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    {layer.type}{layer.locked ? ' • locked' : ''}
+                  </div>
                 </button>
                 <div className="flex gap-1">
                   <button
@@ -67,6 +87,13 @@ export default function LayerPanel({
                     className="mono border border-line px-1.5 py-0.5 text-[11px] hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
                     {layer.visible === false ? 'Show' : 'Hide'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onLayerLockToggle(layer.id)}
+                    className="mono border border-line px-1.5 py-0.5 text-[11px] hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    {layer.locked ? 'Unlock' : 'Lock'}
                   </button>
                   <button
                     type="button"
@@ -96,13 +123,29 @@ export default function LayerPanel({
               <div className="text-sm font-medium">{selectedLayer.name}</div>
               <div className="mono text-xs uppercase tracking-wide text-zinc-500">{selectedLayer.type}</div>
             </div>
-            <button
-              type="button"
-              onClick={() => onLayerDelete(selectedLayer.id)}
-              className="mono border border-line px-2 py-1 text-xs uppercase text-alert hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              Delete
-            </button>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => onDuplicateLayer(selectedLayer.id)}
+                className="mono border border-line px-2 py-1 text-xs uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Duplicate
+              </button>
+              <button
+                type="button"
+                onClick={() => onLayerLockToggle(selectedLayer.id)}
+                className="mono border border-line px-2 py-1 text-xs uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                {selectedLayer.locked ? 'Unlock' : 'Lock'}
+              </button>
+              <button
+                type="button"
+                onClick={() => onLayerDelete(selectedLayer.id)}
+                className="mono border border-line px-2 py-1 text-xs uppercase text-alert hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                Delete
+              </button>
+            </div>
           </div>
 
           {selectedWarnings.length > 0 && (
@@ -145,6 +188,63 @@ export default function LayerPanel({
               />
             </Field>
           </div>
+
+          <div className="grid grid-cols-3 gap-1">
+            <button
+              type="button"
+              onClick={() => onAlignLayer(selectedLayer.id, 'center-x')}
+              className="mono border border-line px-2 py-1 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Center X
+            </button>
+            <button
+              type="button"
+              onClick={() => onAlignLayer(selectedLayer.id, 'center-y')}
+              className="mono border border-line px-2 py-1 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Center Y
+            </button>
+            <button
+              type="button"
+              onClick={() => onAlignLayer(selectedLayer.id, 'center')}
+              className="mono border border-line px-2 py-1 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Center Both
+            </button>
+          </div>
+
+          <Field label={`Opacity (${Math.round((selectedLayer.opacity ?? 1) * 100)}%)`}>
+            <input
+              type="range"
+              min="0.05"
+              max="1"
+              step="0.01"
+              value={selectedLayer.opacity ?? 1}
+              onChange={(event) =>
+                onLayerUpdate(selectedLayer.id, {
+                  opacity: Number(event.target.value),
+                })
+              }
+            />
+          </Field>
+
+          <Field label="Blend Mode">
+            <select
+              value={selectedLayer.blendMode || 'normal'}
+              onChange={(event) =>
+                onLayerUpdate(selectedLayer.id, {
+                  blendMode: event.target.value,
+                })
+              }
+              className="border border-line px-2 py-1"
+            >
+              {blendModes.map((mode) => (
+                <option key={mode.value} value={mode.value}>
+                  {mode.label}
+                </option>
+              ))}
+            </select>
+          </Field>
 
           {selectedLayer.type === 'image' && (
             <div className="grid grid-cols-2 gap-2">
@@ -234,21 +334,6 @@ export default function LayerPanel({
                 />
               </Field>
 
-              <Field label={`Opacity (${Math.round((selectedLayer.opacity ?? 0.35) * 100)}%)`}>
-                <input
-                  type="range"
-                  min="0.05"
-                  max="1"
-                  step="0.01"
-                  value={selectedLayer.opacity ?? 0.35}
-                  onChange={(event) =>
-                    onLayerUpdate(selectedLayer.id, {
-                      opacity: Number(event.target.value),
-                    })
-                  }
-                />
-              </Field>
-
               <Field label={`Blur (${Math.round(selectedLayer.blur || 28)}px)`}>
                 <input
                   type="range"
@@ -297,6 +382,130 @@ export default function LayerPanel({
                   />
                 </Field>
               )}
+            </>
+          )}
+
+          {selectedLayer.type === 'mockup' && (
+            <>
+              <Field label="Mockup Style">
+                <select
+                  value={selectedLayer.mockupStyle || 'realistic'}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      mockupStyle: event.target.value,
+                    })
+                  }
+                  className="border border-line px-2 py-1"
+                >
+                  <option value="realistic">Realistic</option>
+                  <option value="flat">Flat</option>
+                  <option value="rounded">Rounded</option>
+                </select>
+              </Field>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Width">
+                  <input
+                    type="number"
+                    value={Math.round(selectedLayer.width || 0)}
+                    onChange={(event) =>
+                      onLayerUpdate(selectedLayer.id, {
+                        width: Math.max(180, Number(event.target.value) || 180),
+                      })
+                    }
+                    className="border border-line px-2 py-1"
+                  />
+                </Field>
+                <Field label="Height">
+                  <input
+                    type="number"
+                    value={Math.round(selectedLayer.height || 0)}
+                    onChange={(event) =>
+                      onLayerUpdate(selectedLayer.id, {
+                        height: Math.max(300, Number(event.target.value) || 300),
+                      })
+                    }
+                    className="border border-line px-2 py-1"
+                  />
+                </Field>
+              </div>
+
+              <Field label="Frame Color">
+                <input
+                  type="color"
+                  value={selectedLayer.frameColor || '#0f172a'}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      frameColor: event.target.value,
+                    })
+                  }
+                  className="h-9 w-full border border-line"
+                />
+              </Field>
+
+              <Field label="Accent Color">
+                <input
+                  type="color"
+                  value={selectedLayer.accentColor || '#334155'}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      accentColor: event.target.value,
+                    })
+                  }
+                  className="h-9 w-full border border-line"
+                />
+              </Field>
+
+              <Field label={`Bezel (${Math.round(selectedLayer.bezel || 20)}px)`}>
+                <input
+                  type="range"
+                  min="6"
+                  max="64"
+                  step="1"
+                  value={selectedLayer.bezel || 20}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      bezel: Number(event.target.value),
+                    })
+                  }
+                />
+              </Field>
+
+              <Field label={`Corner Radius (${Math.round(selectedLayer.cornerRadius || 80)}px)`}>
+                <input
+                  type="range"
+                  min="8"
+                  max="260"
+                  step="1"
+                  value={selectedLayer.cornerRadius || 80}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      cornerRadius: Number(event.target.value),
+                    })
+                  }
+                />
+              </Field>
+
+              <button
+                type="button"
+                onClick={() => mockupUploadRef.current?.click()}
+                className="mono border border-line px-2 py-1.5 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Upload Screen Image
+              </button>
+              <input
+                ref={mockupUploadRef}
+                type="file"
+                accept="image/png,image/jpeg"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    onMockupScreenUpload(selectedLayer.id, file);
+                  }
+                  event.target.value = '';
+                }}
+              />
             </>
           )}
 

@@ -24,12 +24,19 @@ export default function ScreenshotEditor({
   onDuplicateScreenshot,
   onDeleteScreenshot,
   onMoveScreenshot,
+  onCyclePrevScreenshot,
+  onCycleNextScreenshot,
   onAddTextLayer,
   onAddDecorLayer,
+  onAddMockupLayer,
   onAddImageLayers,
   onLayerUpdate,
+  onMockupScreenUpload,
   onLayerDelete,
   onLayerVisibility,
+  onLayerLockToggle,
+  onDuplicateLayer,
+  onAlignLayer,
   onMoveLayer,
   onExportSingle,
   onExportAll,
@@ -152,7 +159,7 @@ export default function ScreenshotEditor({
         </aside>
 
         <section className="panel animate-reveal border p-3" style={{ animationDelay: '140ms' }}>
-          <div className="mb-3 grid gap-2 border-b border-line pb-3 md:grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr] md:items-center">
+          <div className="mb-3 grid gap-2 border-b border-line pb-3 md:grid-cols-[auto_auto_auto_auto_auto_auto_auto_auto_auto_auto_1fr] md:items-center">
             <label className="mono flex items-center gap-2 text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
               BG
               <input
@@ -211,6 +218,30 @@ export default function ScreenshotEditor({
               Add Glow
             </button>
 
+            <button
+              type="button"
+              onClick={() => onAddMockupLayer('realistic')}
+              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Mockup Realistic
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onAddMockupLayer('flat')}
+              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Mockup Flat
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onAddMockupLayer('rounded')}
+              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Mockup Rounded
+            </button>
+
             <div className="mono text-xs text-zinc-500 dark:text-zinc-400 md:text-right">
               {selectedLayer?.type === 'text' ? `Chars: ${selectedTextLength}` : 'Select a text layer to count'}
             </div>
@@ -234,6 +265,8 @@ export default function ScreenshotEditor({
             onSelectLayer={onSetSelectedLayer}
             onLayerUpdate={onLayerUpdate}
             onAddImageLayers={onAddImageLayers}
+            onCyclePrevScreenshot={onCyclePrevScreenshot}
+            onCycleNextScreenshot={onCycleNextScreenshot}
           />
 
           <input
@@ -258,8 +291,12 @@ export default function ScreenshotEditor({
           warnings={warnings}
           onSelectLayer={onSetSelectedLayer}
           onLayerUpdate={onLayerUpdate}
+          onMockupScreenUpload={onMockupScreenUpload}
           onLayerDelete={onLayerDelete}
           onLayerVisibility={onLayerVisibility}
+          onLayerLockToggle={onLayerLockToggle}
+          onDuplicateLayer={onDuplicateLayer}
+          onAlignLayer={onAlignLayer}
           onMoveLayer={onMoveLayer}
           onExportSingle={onExportSingle}
           onExportAll={onExportAll}

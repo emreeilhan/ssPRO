@@ -36,6 +36,24 @@ const reorderByIndex = (items, fromIndex, toIndex) => {
   return next;
 };
 
+const estimateLayerHeight = (layer) => {
+  if (!layer) {
+    return 0;
+  }
+
+  if (typeof layer.height === 'number') {
+    return layer.height;
+  }
+
+  if (layer.type === 'text') {
+    const text = layer.text || '';
+    const lines = text.split('\n').length || 1;
+    return Math.max(40, (layer.fontSize || 64) * 1.1 * lines);
+  }
+
+  return 0;
+};
+
 const THEME_STORAGE_KEY = 'sspro-theme';
 
 const getInitialTheme = () => {
@@ -184,6 +202,20 @@ export default function App() {
     });
   };
 
+  const handleCycleScreenshot = (direction) => {
+    if (screenshots.length <= 1) {
+      return;
+    }
+
+    const step = direction === 'next' ? 1 : -1;
+    const currentIndex = screenshots.findIndex((item) => item.id === activeScreenshotId);
+    const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex = (safeIndex + step + screenshots.length) % screenshots.length;
+
+    setActiveScreenshotId(screenshots[nextIndex].id);
+    setSelectedLayerId(null);
+  };
+
   const handleAddTextLayer = () => {
     const layerId = allocateLayerId();
 
@@ -195,6 +227,8 @@ export default function App() {
         type: 'text',
         name: `Text ${textCount}`,
         visible: true,
+        locked: false,
+        blendMode: 'normal',
         text: 'Headline goes here',
         x: 90,
         y: 420,
@@ -204,6 +238,7 @@ export default function App() {
         color: '#101010',
         align: 'left',
         fontFamily: 'IBM Plex Sans',
+        opacity: 1,
         rotation: 0,
       };
 
@@ -242,6 +277,9 @@ export default function App() {
         type: 'image',
         name: `Image ${parsedLayers.length + 1}`,
         visible: true,
+        locked: false,
+        blendMode: 'normal',
+        opacity: 1,
         dataUrl,
         x: Math.round((DEVICE_PRESET.width - layerWidth) / 2),
         y: Math.round((DEVICE_PRESET.height - layerHeight) / 2),
@@ -318,6 +356,8 @@ export default function App() {
         shapeKind: preset.shapeKind,
         name: `Decor ${decorCount}`,
         visible: true,
+        locked: false,
+        blendMode: 'normal',
         x: 160,
         y: 280,
         width: preset.width,
@@ -338,6 +378,99 @@ export default function App() {
     });
 
     setSelectedLayerId(layerId);
+  };
+
+  const buildMockupPreset = (style) => {
+    const presets = {
+      realistic: {
+        mockupStyle: 'realistic',
+        width: 820,
+        height: 1680,
+        bezel: 26,
+        cornerRadius: 120,
+        frameColor: '#0f172a',
+        accentColor: '#334155',
+        screenBg: '#0b0b0b',
+        shadowBlur: 46,
+        shadowOpacity: 0.34,
+      },
+      flat: {
+        mockupStyle: 'flat',
+        width: 800,
+        height: 1640,
+        bezel: 16,
+        cornerRadius: 54,
+        frameColor: '#0f172a',
+        accentColor: '#0f172a',
+        screenBg: '#0b0b0b',
+        shadowBlur: 0,
+        shadowOpacity: 0,
+      },
+      rounded: {
+        mockupStyle: 'rounded',
+        width: 810,
+        height: 1660,
+        bezel: 22,
+        cornerRadius: 164,
+        frameColor: '#f8fafc',
+        accentColor: '#dbeafe',
+        screenBg: '#0b0b0b',
+        shadowBlur: 30,
+        shadowOpacity: 0.24,
+      },
+    };
+
+    return presets[style] || presets.realistic;
+  };
+
+  const handleAddMockupLayer = (style = 'realistic') => {
+    const layerId = allocateLayerId();
+    const preset = buildMockupPreset(style);
+
+    updateActiveScreenshot((item) => {
+      const mockupCount = item.layers.filter((layer) => layer.type === 'mockup').length + 1;
+      const lastImageLayer = [...item.layers].reverse().find((layer) => layer.type === 'image');
+
+      const nextLayer = {
+        id: layerId,
+        type: 'mockup',
+        name: `Mockup ${mockupCount}`,
+        visible: true,
+        locked: false,
+        blendMode: 'normal',
+        opacity: 1,
+        x: Math.round((DEVICE_PRESET.width - preset.width) / 2),
+        y: 560,
+        width: preset.width,
+        height: preset.height,
+        rotation: 0,
+        mockupStyle: preset.mockupStyle,
+        bezel: preset.bezel,
+        cornerRadius: preset.cornerRadius,
+        frameColor: preset.frameColor,
+        accentColor: preset.accentColor,
+        screenBg: preset.screenBg,
+        shadowBlur: preset.shadowBlur,
+        shadowOpacity: preset.shadowOpacity,
+        screenDataUrl: lastImageLayer?.dataUrl || null,
+      };
+
+      return {
+        ...item,
+        layers: [...item.layers, nextLayer],
+      };
+    });
+
+    setSelectedLayerId(layerId);
+  };
+
+  const handleMockupScreenUpload = async (layerId, file) => {
+    if (!file || !/image\/(png|jpeg|jpg)/.test(file.type)) {
+      return;
+    }
+
+    const dataUrl = await readFileAsDataURL(file);
+    handleLayerUpdate(layerId, { screenDataUrl: dataUrl });
   };
 
   const handleLayerUpdate = (layerId, patch) => {
@@ -365,6 +498,72 @@ export default function App() {
         layer.id === layerId ? { ...layer, visible: layer.visible === false ? true : false } : layer,
       ),
     }));
+  };
+
+  const handleLayerLockToggle = (layerId) => {
+    updateActiveScreenshot((item) => ({
+      ...item,
+      layers: item.layers.map((layer) =>
+        layer.id === layerId ? { ...layer, locked: layer.locked === true ? false : true } : layer,
+      ),
+    }));
+  };
+
+  const handleDuplicateLayer = (layerId) => {
+    updateActiveScreenshot((item) => {
+      const index = item.layers.findIndex((layer) => layer.id === layerId);
+      if (index < 0) {
+        return item;
+      }
+
+      const source = item.layers[index];
+      const copy = {
+        ...source,
+        id: allocateLayerId(),
+        name: `${source.name} Copy`,
+        locked: false,
+        x: Math.round((source.x || 0) + 26),
+        y: Math.round((source.y || 0) + 26),
+      };
+
+      const nextLayers = [...item.layers];
+      nextLayers.splice(index + 1, 0, copy);
+
+      setSelectedLayerId(copy.id);
+
+      return {
+        ...item,
+        layers: nextLayers,
+      };
+    });
+  };
+
+  const handleAlignLayer = (layerId, mode) => {
+    updateActiveScreenshot((item) => {
+      const targetLayer = item.layers.find((layer) => layer.id === layerId);
+      if (!targetLayer) {
+        return item;
+      }
+
+      const layerWidth = targetLayer.width || 0;
+      const layerHeight = estimateLayerHeight(targetLayer);
+      const patch = {};
+
+      if (mode === 'center-x' || mode === 'center') {
+        patch.x = Math.round((DEVICE_PRESET.width - layerWidth) / 2);
+      }
+
+      if (mode === 'center-y' || mode === 'center') {
+        patch.y = Math.round((DEVICE_PRESET.height - layerHeight) / 2);
+      }
+
+      return {
+        ...item,
+        layers: item.layers.map((layer) =>
+          layer.id === layerId ? { ...layer, ...patch } : layer,
+        ),
+      };
+    });
   };
 
   const handleMoveLayer = (layerId, direction) => {
@@ -445,12 +644,19 @@ export default function App() {
       onDuplicateScreenshot={handleDuplicateScreenshot}
       onDeleteScreenshot={handleDeleteScreenshot}
       onMoveScreenshot={handleMoveScreenshot}
+      onCyclePrevScreenshot={() => handleCycleScreenshot('prev')}
+      onCycleNextScreenshot={() => handleCycleScreenshot('next')}
       onAddTextLayer={handleAddTextLayer}
       onAddDecorLayer={handleAddDecorLayer}
+      onAddMockupLayer={handleAddMockupLayer}
       onAddImageLayers={handleAddImageLayers}
       onLayerUpdate={handleLayerUpdate}
+      onMockupScreenUpload={handleMockupScreenUpload}
       onLayerDelete={handleLayerDelete}
       onLayerVisibility={handleLayerVisibility}
+      onLayerLockToggle={handleLayerLockToggle}
+      onDuplicateLayer={handleDuplicateLayer}
+      onAlignLayer={handleAlignLayer}
       onMoveLayer={handleMoveLayer}
       onExportSingle={handleExportSingle}
       onExportAll={handleExportAll}
