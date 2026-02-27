@@ -1,5 +1,35 @@
 # CHANGELOGS
 
+## 0.0.24 - 2026-02-27
+- Added screenshot thumbnails to the left sidebar list for faster visual navigation.
+- Implemented new `src/components/ScreenshotThumbnail.jsx` that renders compact, read-only previews using Konva.
+- Updated screenshot list cards in `src/components/ScreenshotEditor.jsx` to show thumbnail + index + layer count together.
+- Verified thumbnail list integration with a successful production build using `npm run build`.
+
+## 0.0.23 - 2026-02-27
+- Added keyboard delete behavior in `src/App.jsx`: pressing `Delete` or `Backspace` now removes the currently selected layer.
+- Added typing-context guard so delete shortcuts are ignored while editing inputs, textareas, selects, or contenteditable fields.
+- Verified delete-shortcut integration with a successful production build using `npm run build`.
+
+## 0.0.22 - 2026-02-27
+- Added context-aware empty-state coaching in `src/components/ScreenshotEditor.jsx` with actionable quick-start recommendations.
+- Implemented dynamic guidance logic for different composition states (empty canvas, visual-only, text-only, and near-final layouts).
+- Added one-click coaching actions wired to existing commands (`Add Text`, image upload, decor, and mockup insertion) to reduce first-session drop-off.
+- Verified empty-state coaching integration with a successful production build using `npm run build`.
+
+## 0.0.21 - 2026-02-27
+- Added side-by-side comparison mode in `src/components/ScreenshotEditor.jsx` with a `Compare` toggle and variant selector.
+- Implemented dual-canvas layout: editable current screenshot panel + read-only comparison panel for faster decision-making.
+- Added read-only rendering support in `src/components/CanvasStage.jsx` and interaction gating in canvas layer renderers to prevent accidental edits on compare view.
+- Added panel labels (`Current`, `Compare Variant`) and preserved existing editing workflow when compare mode is off.
+- Verified comparison mode integration with a successful production build using `npm run build`.
+
+## 0.0.20 - 2026-02-27
+- Added standardized typography scale presets in `src/constants.js`: `Hero`, `Subhead`, and `Caption`.
+- Added one-click preset controls in `src/components/LayerPanel.jsx` for text layers to apply consistent `fontSize`, `lineHeight`, and text `width`.
+- Added active preset highlighting so teams can quickly verify typography hierarchy consistency in the inspector.
+- Verified typography preset integration with a successful production build using `npm run build`.
+
 ## 0.0.19 - 2026-02-27
 - Added batch export progress reporting with phase-aware updates (`render` and `zip`) in `src/utils/exportScreenshots.js`.
 - Added cancellable export flow using `AbortController` and `AbortError` handling for long-running ZIP exports.

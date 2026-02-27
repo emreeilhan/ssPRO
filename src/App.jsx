@@ -579,6 +579,20 @@ export default function App() {
 
   useEffect(() => {
     const handleKeydown = (event) => {
+      const target = event.target;
+      const isTypingContext =
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT');
+
+      if (!isTypingContext && selectedLayerId && (event.key === 'Delete' || event.key === 'Backspace')) {
+        event.preventDefault();
+        handleLayerDelete(selectedLayerId);
+        return;
+      }
+
       const isModifier = event.metaKey || event.ctrlKey;
       if (!isModifier) {
         return;
@@ -606,7 +620,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
-  }, [canRedo, canUndo, handleRedo, handleUndo]);
+  }, [canRedo, canUndo, handleLayerDelete, handleRedo, handleUndo, selectedLayerId]);
 
   const handleExportSingle = async () => {
     if (!activeScreenshot || activeScreenshotIndex < 0) {

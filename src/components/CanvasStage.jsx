@@ -12,6 +12,8 @@ export default function CanvasStage({
   onAddImageLayers,
   onCyclePrevScreenshot,
   onCycleNextScreenshot,
+  readOnly = false,
+  label = null,
 }) {
   const frameRef = useRef(null);
   const transformerRef = useRef(null);
@@ -78,6 +80,10 @@ export default function CanvasStage({
   };
 
   const commitDrag = (layerId, node) => {
+    if (readOnly) {
+      return;
+    }
+
     onLayerUpdate(layerId, {
       x: Math.round(node.x() / previewScale),
       y: Math.round(node.y() / previewScale),
@@ -85,6 +91,10 @@ export default function CanvasStage({
   };
 
   const commitTransform = (layer, node) => {
+    if (readOnly) {
+      return;
+    }
+
     commitTransformForLayer({
       layer,
       node,
@@ -94,6 +104,10 @@ export default function CanvasStage({
   };
 
   const handleDrop = async (event) => {
+    if (readOnly) {
+      return;
+    }
+
     event.preventDefault();
     setIsDragActive(false);
 
@@ -104,6 +118,10 @@ export default function CanvasStage({
   };
 
   const handleStagePointerDown = (event) => {
+    if (readOnly) {
+      return;
+    }
+
     const target = event.target;
     const clickedStage = target === target.getStage();
     const clickedBackground = target.name() === 'stage-background';
@@ -114,6 +132,10 @@ export default function CanvasStage({
   };
 
   const handleCanvasWheel = (event) => {
+    if (readOnly) {
+      return;
+    }
+
     const horizontalDelta =
       Math.abs(event.deltaX) > Math.abs(event.deltaY)
         ? event.deltaX
@@ -155,6 +177,9 @@ export default function CanvasStage({
       ref={frameRef}
       onWheel={handleCanvasWheel}
       onDragOver={(event) => {
+        if (readOnly) {
+          return;
+        }
         event.preventDefault();
         setIsDragActive(true);
       }}
@@ -162,6 +187,11 @@ export default function CanvasStage({
       onDrop={handleDrop}
       className={`border border-line p-2 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-900/20' : 'bg-zinc-100/40 dark:bg-zinc-900/40'}`}
     >
+      {label && (
+        <div className="mono mb-2 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          {label}
+        </div>
+      )}
       <div className="mx-auto" style={{ width: `${previewWidth}px` }}>
         <Stage
           width={previewWidth}
@@ -188,27 +218,32 @@ export default function CanvasStage({
                 setNodeRef,
                 commitDrag,
                 commitTransform,
+                isInteractive: !readOnly,
               }),
             )}
 
-            <Transformer
-              ref={transformerRef}
-              rotateEnabled
-              keepRatio={false}
-              boundBoxFunc={(oldBox, newBox) => {
-                if (newBox.width < 20 || newBox.height < 20) {
-                  return oldBox;
-                }
+            {!readOnly && (
+              <Transformer
+                ref={transformerRef}
+                rotateEnabled
+                keepRatio={false}
+                boundBoxFunc={(oldBox, newBox) => {
+                  if (newBox.width < 20 || newBox.height < 20) {
+                    return oldBox;
+                  }
 
-                return newBox;
-              }}
-            />
+                  return newBox;
+                }}
+              />
+            )}
           </Layer>
         </Stage>
       </div>
 
       <p className="mono mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-        Drag PNG/JPG files here or use upload button. Resize via transform handles. Horizontal scroll changes screenshot.
+        {readOnly
+          ? 'Comparison panel is read-only.'
+          : 'Drag PNG/JPG files here or use upload button. Resize via transform handles. Horizontal scroll changes screenshot.'}
       </p>
     </div>
   );

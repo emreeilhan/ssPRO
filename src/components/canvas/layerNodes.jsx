@@ -42,7 +42,7 @@ function getMockupMetrics(layer, scale) {
 }
 
 export const ImageLayerNode = forwardRef(function ImageLayerNode(
-  { layer, scale, onSelect, onDragEnd, onTransformEnd },
+  { layer, scale, isInteractive = true, onSelect, onDragEnd, onTransformEnd },
   ref,
 ) {
   const [asset, setAsset] = useState(null);
@@ -83,7 +83,7 @@ export const ImageLayerNode = forwardRef(function ImageLayerNode(
       width={layer.width * scale}
       height={layer.height * scale}
       rotation={layer.rotation || 0}
-      draggable
+      draggable={isInteractive}
       onClick={onSelect}
       onTap={onSelect}
       onDragEnd={onDragEnd}
@@ -93,7 +93,7 @@ export const ImageLayerNode = forwardRef(function ImageLayerNode(
 });
 
 export const MockupLayerNode = forwardRef(function MockupLayerNode(
-  { layer, scale, onSelect, onDragEnd, onTransformEnd },
+  { layer, scale, isInteractive = true, onSelect, onDragEnd, onTransformEnd },
   ref,
 ) {
   const [screenAsset, setScreenAsset] = useState(null);
@@ -152,7 +152,7 @@ export const MockupLayerNode = forwardRef(function MockupLayerNode(
       y={layer.y * scale}
       width={width}
       height={height}
-      draggable
+      draggable={isInteractive}
       rotation={layer.rotation || 0}
       onClick={onSelect}
       onTap={onSelect}

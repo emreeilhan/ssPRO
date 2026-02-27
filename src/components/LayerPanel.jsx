@@ -532,13 +532,12 @@ export default function LayerPanel({
 
               <Field label="Type Scale">
                 <div className="grid grid-cols-3 gap-1">
-                  {TYPOGRAPHY_SCALES.map((preset) => (
-                    {
-                      const isActive =
-                        Math.round(selectedLayer.fontSize || 0) === preset.fontSize &&
-                        Math.abs((selectedLayer.lineHeight || 1.1) - preset.lineHeight) < 0.01 &&
-                        Math.round(selectedLayer.width || 0) === preset.width;
-                      return (
+                  {TYPOGRAPHY_SCALES.map((preset) => {
+                    const isActive =
+                      Math.round(selectedLayer.fontSize || 0) === preset.fontSize &&
+                      Math.abs((selectedLayer.lineHeight || 1.1) - preset.lineHeight) < 0.01 &&
+                      Math.round(selectedLayer.width || 0) === preset.width;
+                    return (
                     <button
                       key={preset.id}
                       type="button"
@@ -555,9 +554,8 @@ export default function LayerPanel({
                     >
                       {preset.label}
                     </button>
-                      );
-                    },
-                  )}
+                    );
+                  })}
                 </div>
               </Field>
 

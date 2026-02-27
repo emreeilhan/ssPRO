@@ -1,9 +1,87 @@
-import { useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import CanvasStage from './CanvasStage';
 import LayerPanel from './LayerPanel';
+import ScreenshotThumbnail from './ScreenshotThumbnail';
 
 function formatScreenshotNumber(index) {
   return String(index + 1).padStart(2, '0');
+}
+
+function buildCoachingActions({ screenshot, onAddTextLayer, onAddDecorLayer, onAddMockupLayer, openFileDialog }) {
+  const layers = screenshot?.layers || [];
+  const hasText = layers.some((layer) => layer.type === 'text');
+  const hasImage = layers.some((layer) => layer.type === 'image');
+  const hasMockup = layers.some((layer) => layer.type === 'mockup');
+
+  if (!layers.length) {
+    return [
+      {
+        id: 'headline',
+        label: 'Once Baslik Ekle',
+        hint: 'Mesajinizi ilk 2 saniyede okutun.',
+        onClick: onAddTextLayer,
+      },
+      {
+        id: 'visual',
+        label: 'Urun Gorseli Yukle',
+        hint: 'Ekran goruntusu veya app mockup kullanin.',
+        onClick: openFileDialog,
+      },
+      {
+        id: 'depth',
+        label: 'Arka Plan Derinligi',
+        hint: 'Orb ile hizli kontrast ve odak olusturun.',
+        onClick: () => onAddDecorLayer('orb'),
+      },
+    ];
+  }
+
+  if (hasImage && !hasText) {
+    return [
+      {
+        id: 'headline',
+        label: 'Baslik Ekleyin',
+        hint: 'Gorselin anlattigini metinle netlestirin.',
+        onClick: onAddTextLayer,
+      },
+      {
+        id: 'mockup',
+        label: 'Mockup Cercevesi',
+        hint: 'Store vitrini icin daha premium sunum.',
+        onClick: () => onAddMockupLayer('realistic'),
+      },
+    ];
+  }
+
+  if (hasText && !hasImage && !hasMockup) {
+    return [
+      {
+        id: 'visual',
+        label: 'Gorsel Yukleyin',
+        hint: 'Sadece metin yerine urun baglami gosterin.',
+        onClick: openFileDialog,
+      },
+      {
+        id: 'support',
+        label: 'Destekleyici Sekil',
+        hint: 'Glow/Pill ile hiyerarsi guclenir.',
+        onClick: () => onAddDecorLayer('glow'),
+      },
+    ];
+  }
+
+  if (hasText && hasImage && !hasMockup) {
+    return [
+      {
+        id: 'mockup',
+        label: 'Mockup Ekle',
+        hint: 'Final sunuma daha yakin bir onizleme alin.',
+        onClick: () => onAddMockupLayer('realistic'),
+      },
+    ];
+  }
+
+  return [];
 }
 
 export default function ScreenshotEditor({
@@ -52,12 +130,40 @@ export default function ScreenshotEditor({
 }) {
   const fileInputRef = useRef(null);
   const projectInputRef = useRef(null);
+  const [isCompareMode, setIsCompareMode] = useState(false);
+  const [compareScreenshotId, setCompareScreenshotId] = useState(null);
 
   if (!activeScreenshot) {
     return null;
   }
 
   const selectedTextLength = selectedLayer?.type === 'text' ? selectedLayer.text.length : 0;
+  const compareOptions = useMemo(
+    () => screenshots.filter((shot) => shot.id !== activeScreenshotId),
+    [activeScreenshotId, screenshots],
+  );
+
+  useEffect(() => {
+    if (!compareOptions.length) {
+      setCompareScreenshotId(null);
+      return;
+    }
+
+    const isValid = compareOptions.some((shot) => shot.id === compareScreenshotId);
+    if (isValid) {
+      return;
+    }
+
+    const fallbackPrevious = screenshots[activeScreenshotIndex - 1];
+    const fallback = (fallbackPrevious && fallbackPrevious.id !== activeScreenshotId && fallbackPrevious)
+      || compareOptions[0];
+    setCompareScreenshotId(fallback.id);
+  }, [activeScreenshotId, activeScreenshotIndex, compareOptions, compareScreenshotId, screenshots]);
+
+  const compareScreenshot = useMemo(
+    () => screenshots.find((shot) => shot.id === compareScreenshotId) || null,
+    [compareScreenshotId, screenshots],
+  );
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
@@ -83,6 +189,14 @@ export default function ScreenshotEditor({
     }
     event.target.value = '';
   };
+
+  const coachingActions = buildCoachingActions({
+    screenshot: activeScreenshot,
+    onAddTextLayer,
+    onAddDecorLayer,
+    onAddMockupLayer,
+    openFileDialog,
+  });
 
   return (
     <div className="min-h-screen px-4 py-4 md:px-6 md:py-5">
@@ -158,10 +272,17 @@ export default function ScreenshotEditor({
                   <button
                     type="button"
                     onClick={() => onSelectScreenshot(shot.id)}
-                    className="text-left"
+                    className="grid grid-cols-[56px_1fr] items-center gap-2 text-left"
                   >
-                    <div className="mono text-sm font-medium">{formatScreenshotNumber(index)}</div>
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400">{shot.layers.length} layers</div>
+                    <ScreenshotThumbnail
+                      screenshot={shot}
+                      devicePreset={devicePreset}
+                      width={54}
+                    />
+                    <div>
+                      <div className="mono text-sm font-medium">{formatScreenshotNumber(index)}</div>
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">{shot.layers.length} layers</div>
+                    </div>
                   </button>
                   <div className="flex gap-1">
                     <button
@@ -271,6 +392,33 @@ export default function ScreenshotEditor({
 
             <button
               type="button"
+              onClick={() => setIsCompareMode((prev) => !prev)}
+              className={`mono border px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                isCompareMode ? 'border-accent text-accent' : 'border-line'
+              }`}
+            >
+              Compare
+            </button>
+
+            {isCompareMode && (
+              <select
+                value={compareScreenshotId || ''}
+                onChange={(event) => setCompareScreenshotId(Number(event.target.value))}
+                className="mono border border-line px-2 py-1.5 text-xs uppercase tracking-wide"
+              >
+                {compareOptions.map((shot) => {
+                  const screenshotOrder = screenshots.findIndex((item) => item.id === shot.id);
+                  return (
+                    <option key={shot.id} value={shot.id}>
+                      {`Variant ${formatScreenshotNumber(screenshotOrder)} • ${shot.layers.length} layers`}
+                    </option>
+                  );
+                })}
+              </select>
+            )}
+
+            <button
+              type="button"
               onClick={() => onAddMockupLayer('realistic')}
               className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
             >
@@ -309,16 +457,65 @@ export default function ScreenshotEditor({
             </div>
           )}
 
-          <CanvasStage
-            screenshot={activeScreenshot}
-            devicePreset={devicePreset}
-            selectedLayerId={selectedLayerId}
-            onSelectLayer={onSetSelectedLayer}
-            onLayerUpdate={onLayerUpdate}
-            onAddImageLayers={onAddImageLayers}
-            onCyclePrevScreenshot={onCyclePrevScreenshot}
-            onCycleNextScreenshot={onCycleNextScreenshot}
-          />
+          {coachingActions.length > 0 && (
+            <div className="mb-3 border border-accent/30 bg-blue-50/50 px-3 py-2 dark:bg-blue-900/20">
+              <p className="mono mb-1 text-xs uppercase tracking-wide text-accent">Quick Start Guidance</p>
+              <div className="grid gap-2 md:grid-cols-2">
+                {coachingActions.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    onClick={action.onClick}
+                    className="text-left border border-line bg-white/80 px-2 py-2 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-800"
+                  >
+                    <p className="mono text-xs uppercase tracking-wide text-zinc-800 dark:text-zinc-100">
+                      {action.label}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{action.hint}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isCompareMode && compareScreenshot ? (
+            <div className="grid gap-3 xl:grid-cols-2">
+              <CanvasStage
+                screenshot={activeScreenshot}
+                devicePreset={devicePreset}
+                selectedLayerId={selectedLayerId}
+                onSelectLayer={onSetSelectedLayer}
+                onLayerUpdate={onLayerUpdate}
+                onAddImageLayers={onAddImageLayers}
+                onCyclePrevScreenshot={onCyclePrevScreenshot}
+                onCycleNextScreenshot={onCycleNextScreenshot}
+                label="Current"
+              />
+              <CanvasStage
+                screenshot={compareScreenshot}
+                devicePreset={devicePreset}
+                selectedLayerId={null}
+                onSelectLayer={() => {}}
+                onLayerUpdate={() => {}}
+                onAddImageLayers={null}
+                onCyclePrevScreenshot={null}
+                onCycleNextScreenshot={null}
+                readOnly
+                label="Compare Variant"
+              />
+            </div>
+          ) : (
+            <CanvasStage
+              screenshot={activeScreenshot}
+              devicePreset={devicePreset}
+              selectedLayerId={selectedLayerId}
+              onSelectLayer={onSetSelectedLayer}
+              onLayerUpdate={onLayerUpdate}
+              onAddImageLayers={onAddImageLayers}
+              onCyclePrevScreenshot={onCyclePrevScreenshot}
+              onCycleNextScreenshot={onCycleNextScreenshot}
+            />
+          )}
 
           <input
             ref={fileInputRef}

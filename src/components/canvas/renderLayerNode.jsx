@@ -17,15 +17,28 @@ export const renderLayerNode = ({
   setNodeRef,
   commitDrag,
   commitTransform,
+  isInteractive = true,
 }) => {
   if (layer.visible === false) {
     return null;
   }
 
   const sharedProps = {
-    onSelect: () => onSelectLayer(layer.id),
-    onDragEnd: (event) => commitDrag(layer.id, event.target),
-    onTransformEnd: (event) => commitTransform(layer, event.target),
+    onSelect: () => {
+      if (isInteractive) {
+        onSelectLayer(layer.id);
+      }
+    },
+    onDragEnd: (event) => {
+      if (isInteractive) {
+        commitDrag(layer.id, event.target);
+      }
+    },
+    onTransformEnd: (event) => {
+      if (isInteractive) {
+        commitTransform(layer, event.target);
+      }
+    },
   };
 
   if (layer.type === 'image') {
@@ -35,6 +48,7 @@ export const renderLayerNode = ({
         ref={(node) => setNodeRef(layer.id, node)}
         layer={layer}
         scale={previewScale}
+        isInteractive={isInteractive}
         {...sharedProps}
       />
     );
@@ -55,7 +69,7 @@ export const renderLayerNode = ({
         align={layer.align || 'left'}
         fontFamily={layer.fontFamily || 'IBM Plex Sans'}
         rotation={layer.rotation || 0}
-        draggable
+        draggable={isInteractive}
         onClick={sharedProps.onSelect}
         onTap={sharedProps.onSelect}
         onDragEnd={sharedProps.onDragEnd}
@@ -83,7 +97,7 @@ export const renderLayerNode = ({
         shadowBlur={(layer.blur || 28) * previewScale}
         shadowOpacity={0.45}
         rotation={layer.rotation || 0}
-        draggable
+        draggable={isInteractive}
         onClick={sharedProps.onSelect}
         onTap={sharedProps.onSelect}
         onDragEnd={(event) => centerBasedShapeUpdate({ event, layer, previewScale, onLayerUpdate })}
@@ -108,7 +122,7 @@ export const renderLayerNode = ({
         shadowBlur={(layer.blur || 10) * previewScale}
         shadowOpacity={0.5}
         rotation={layer.rotation || 0}
-        draggable
+        draggable={isInteractive}
         onClick={sharedProps.onSelect}
         onTap={sharedProps.onSelect}
         onDragEnd={(event) => centerBasedShapeUpdate({ event, layer, previewScale, onLayerUpdate })}
@@ -132,7 +146,7 @@ export const renderLayerNode = ({
         fillLinearGradientColorStops={[0, layer.color || '#111827', 1, layer.color2 || '#4b5563']}
         opacity={layer.opacity ?? 0.2}
         rotation={layer.rotation || 0}
-        draggable
+        draggable={isInteractive}
         onClick={sharedProps.onSelect}
         onTap={sharedProps.onSelect}
         onDragEnd={sharedProps.onDragEnd}
@@ -159,7 +173,7 @@ export const renderLayerNode = ({
         shadowBlur={(layer.blur || 34) * previewScale}
         shadowOpacity={0.7}
         rotation={layer.rotation || 0}
-        draggable
+        draggable={isInteractive}
         onClick={sharedProps.onSelect}
         onTap={sharedProps.onSelect}
         onDragEnd={sharedProps.onDragEnd}
@@ -175,6 +189,7 @@ export const renderLayerNode = ({
         ref={(node) => setNodeRef(layer.id, node)}
         layer={layer}
         scale={previewScale}
+        isInteractive={isInteractive}
         onSelect={sharedProps.onSelect}
         onDragEnd={sharedProps.onDragEnd}
         onTransformEnd={sharedProps.onTransformEnd}
