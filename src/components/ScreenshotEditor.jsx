@@ -132,6 +132,7 @@ export default function ScreenshotEditor({
   const projectInputRef = useRef(null);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [compareScreenshotId, setCompareScreenshotId] = useState(null);
+  const [isFocusedMode, setIsFocusedMode] = useState(false);
   const [showSafeArea, setShowSafeArea] = useState(true);
   const [showCenterGuides, setShowCenterGuides] = useState(false);
   const [showMarginGrid, setShowMarginGrid] = useState(false);
@@ -193,6 +194,30 @@ export default function ScreenshotEditor({
     event.target.value = '';
   };
 
+  useEffect(() => {
+    const handleKeydown = (event) => {
+      const target = event.target;
+      const isTypingContext =
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT');
+
+      if (isTypingContext || event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        setIsFocusedMode((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, []);
+
   const coachingActions = buildCoachingActions({
     screenshot: activeScreenshot,
     onAddTextLayer,
@@ -243,6 +268,15 @@ export default function ScreenshotEditor({
           </button>
           <button
             type="button"
+            onClick={() => setIsFocusedMode((prev) => !prev)}
+            className={`mono border px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+              isFocusedMode ? 'border-accent text-accent' : 'border-line'
+            }`}
+          >
+            {isFocusedMode ? 'Exit Focus' : 'Focus Mode'}
+          </button>
+          <button
+            type="button"
             onClick={onToggleTheme}
             className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800"
           >
@@ -254,7 +288,8 @@ export default function ScreenshotEditor({
         </div>
       </header>
 
-      <main className="grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)_320px]">
+      <main className={`grid gap-4 ${isFocusedMode ? 'lg:grid-cols-[minmax(0,1fr)]' : 'lg:grid-cols-[250px_minmax(0,1fr)_320px]'}`}>
+        {!isFocusedMode && (
         <aside className="panel animate-reveal border p-3" style={{ animationDelay: '80ms' }}>
           <div className="mb-3 flex items-center justify-between border-b border-line pb-2">
             <h2 className="mono text-xs font-medium uppercase tracking-widest text-zinc-600 dark:text-zinc-300">Screenshots</h2>
@@ -332,6 +367,7 @@ export default function ScreenshotEditor({
             </button>
           </div>
         </aside>
+        )}
 
         <section className="panel animate-reveal border p-3" style={{ animationDelay: '140ms' }}>
           <div className="mb-3 grid gap-2 border-b border-line pb-3 md:grid-cols-[auto_auto_auto_auto_auto_auto_auto_auto_auto_auto_1fr] md:items-center">
@@ -580,26 +616,28 @@ export default function ScreenshotEditor({
           </div>
         </section>
 
-        <LayerPanel
-          screenshot={activeScreenshot}
-          selectedLayer={selectedLayer}
-          selectedLayerId={selectedLayerId}
-          isExporting={isExporting}
-          exportProgress={exportProgress}
-          warnings={warnings}
-          onSelectLayer={onSetSelectedLayer}
-          onLayerUpdate={onLayerUpdate}
-          onMockupScreenUpload={onMockupScreenUpload}
-          onLayerDelete={onLayerDelete}
-          onLayerVisibility={onLayerVisibility}
-          onLayerLockToggle={onLayerLockToggle}
-          onDuplicateLayer={onDuplicateLayer}
-          onAlignLayer={onAlignLayer}
-          onMoveLayer={onMoveLayer}
-          onExportSingle={onExportSingle}
-          onExportAll={onExportAll}
-          onCancelExport={onCancelExport}
-        />
+        {!isFocusedMode && (
+          <LayerPanel
+            screenshot={activeScreenshot}
+            selectedLayer={selectedLayer}
+            selectedLayerId={selectedLayerId}
+            isExporting={isExporting}
+            exportProgress={exportProgress}
+            warnings={warnings}
+            onSelectLayer={onSetSelectedLayer}
+            onLayerUpdate={onLayerUpdate}
+            onMockupScreenUpload={onMockupScreenUpload}
+            onLayerDelete={onLayerDelete}
+            onLayerVisibility={onLayerVisibility}
+            onLayerLockToggle={onLayerLockToggle}
+            onDuplicateLayer={onDuplicateLayer}
+            onAlignLayer={onAlignLayer}
+            onMoveLayer={onMoveLayer}
+            onExportSingle={onExportSingle}
+            onExportAll={onExportAll}
+            onCancelExport={onCancelExport}
+          />
+        )}
       </main>
     </div>
   );

@@ -1,5 +1,23 @@
 # CHANGELOGS
 
+## 0.0.31 - 2026-02-27
+- Improved canvas fit behavior in `src/components/CanvasStage.jsx` by combining width-based and viewport-height-based scaling.
+- Added responsive viewport height tracking so the preview auto-rescales on window resize.
+- Reduced vertical overflow risk so the full screenshot canvas is visible without extra page scrolling in typical editor layouts.
+- Verified canvas scaling update with a successful production build using `npm run build`.
+
+## 0.0.30 - 2026-02-27
+- Added distraction-free Focus Mode in `src/components/ScreenshotEditor.jsx` to hide left/right sidebars and maximize canvas workspace.
+- Added visible `Focus Mode` / `Exit Focus` header toggle for one-click mode switching.
+- Added keyboard shortcut `F` to toggle focus mode quickly (with typing-context guard to avoid interfering with form input).
+- Verified focus mode integration with a successful production build using `npm run build`.
+
+## 0.0.29 - 2026-02-27
+- Enhanced layer stack scanability in `src/components/LayerPanel.jsx` with per-type icon badges (`TXT`, `IMG`, `MCK`, `SHP`).
+- Added explicit status badges for `Locked` and `Hidden` states in each layer row for faster operator feedback.
+- Added type-specific visual tones for quick classification of text/image/mockup/shape layers at a glance.
+- Verified layer stack icon + status badge integration with a successful production build using `npm run build`.
+
 ## 0.0.28 - 2026-02-27
 - Refactored inspector form in `src/components/LayerPanel.jsx` into accordion sections for `Transform`, `Appearance`, and `Type Specific` controls.
 - Added reusable `AccordionSection` UI block with collapse/expand behavior and section state management.

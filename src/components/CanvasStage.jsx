@@ -22,6 +22,7 @@ export default function CanvasStage({
   const transformerRef = useRef(null);
   const nodeRefs = useRef({});
   const [canvasWrapWidth, setCanvasWrapWidth] = useState(620);
+  const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight || 900);
   const [isDragActive, setIsDragActive] = useState(false);
   const wheelDeltaRef = useRef(0);
   const wheelLockRef = useRef(false);
@@ -58,7 +59,19 @@ export default function CanvasStage({
     [],
   );
 
-  const previewWidth = Math.min(Math.max(canvasWrapWidth - 20, 280), 480);
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportHeight(window.innerHeight || 900);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const widthBasedPreview = Math.min(Math.max(canvasWrapWidth - 20, 240), 480);
+  const maxCanvasHeight = Math.max(420, viewportHeight - 330);
+  const heightBasedPreview = (maxCanvasHeight * devicePreset.width) / devicePreset.height;
+  const previewWidth = Math.min(widthBasedPreview, heightBasedPreview);
   const previewScale = previewWidth / devicePreset.width;
   const previewHeight = devicePreset.height * previewScale;
   const safeMarginX = Math.round(devicePreset.width * 0.05 * previewScale);
