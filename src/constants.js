@@ -27,3 +27,27 @@ export const TEXT_FONT_OPTIONS = [
   'Bebas Neue',
   'Archivo',
 ];
+
+export const TYPOGRAPHY_SCALES = [
+  {
+    id: 'hero',
+    label: 'Hero',
+    fontSize: 148,
+    lineHeight: 1.02,
+    width: 1110,
+  },
+  {
+    id: 'subhead',
+    label: 'Subhead',
+    fontSize: 92,
+    lineHeight: 1.1,
+    width: 1020,
+  },
+  {
+    id: 'caption',
+    label: 'Caption',
+    fontSize: 54,
+    lineHeight: 1.24,
+    width: 960,
+  },
+];
