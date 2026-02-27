@@ -132,6 +132,9 @@ export default function ScreenshotEditor({
   const projectInputRef = useRef(null);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [compareScreenshotId, setCompareScreenshotId] = useState(null);
+  const [showSafeArea, setShowSafeArea] = useState(true);
+  const [showCenterGuides, setShowCenterGuides] = useState(false);
+  const [showMarginGrid, setShowMarginGrid] = useState(false);
 
   if (!activeScreenshot) {
     return null;
@@ -352,6 +355,36 @@ export default function ScreenshotEditor({
 
             <button
               type="button"
+              onClick={() => setShowSafeArea((prev) => !prev)}
+              className={`mono border px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                showSafeArea ? 'border-accent text-accent' : 'border-line'
+              }`}
+            >
+              Safe Area
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowCenterGuides((prev) => !prev)}
+              className={`mono border px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                showCenterGuides ? 'border-accent text-accent' : 'border-line'
+              }`}
+            >
+              Center
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowMarginGrid((prev) => !prev)}
+              className={`mono border px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                showMarginGrid ? 'border-accent text-accent' : 'border-line'
+              }`}
+            >
+              Margin Grid
+            </button>
+
+            <button
+              type="button"
               onClick={onAddTextLayer}
               className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
             >
@@ -490,6 +523,9 @@ export default function ScreenshotEditor({
                 onCyclePrevScreenshot={onCyclePrevScreenshot}
                 onCycleNextScreenshot={onCycleNextScreenshot}
                 label="Current"
+                showSafeArea={showSafeArea}
+                showCenterGuides={showCenterGuides}
+                showMarginGrid={showMarginGrid}
               />
               <CanvasStage
                 screenshot={compareScreenshot}
@@ -502,6 +538,9 @@ export default function ScreenshotEditor({
                 onCycleNextScreenshot={null}
                 readOnly
                 label="Compare Variant"
+                showSafeArea={showSafeArea}
+                showCenterGuides={showCenterGuides}
+                showMarginGrid={showMarginGrid}
               />
             </div>
           ) : (
@@ -514,6 +553,9 @@ export default function ScreenshotEditor({
               onAddImageLayers={onAddImageLayers}
               onCyclePrevScreenshot={onCyclePrevScreenshot}
               onCycleNextScreenshot={onCycleNextScreenshot}
+              showSafeArea={showSafeArea}
+              showCenterGuides={showCenterGuides}
+              showMarginGrid={showMarginGrid}
             />
           )}
 

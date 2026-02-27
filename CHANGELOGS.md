@@ -1,5 +1,17 @@
 # CHANGELOGS
 
+## 0.0.26 - 2026-02-27
+- Reduced initial Google Fonts payload in `src/index.css` to only core UI families (`IBM Plex Sans`, `IBM Plex Mono`).
+- Added on-demand font loading utility in `src/utils/fontLoader.js` for text-layer font families used in projects.
+- Integrated lazy font loading in `src/App.jsx` by scanning active project text layers and requesting missing fonts only when needed.
+- Verified typography-load optimization with a successful production build using `npm run build`.
+
+## 0.0.25 - 2026-02-27
+- Added canvas helper overlay system in `src/components/CanvasStage.jsx` with independent toggles for Safe Area, Center guides, and Margin Grid.
+- Added toolbar toggle controls in `src/components/ScreenshotEditor.jsx` and synced overlay visibility across normal and comparison canvases.
+- Implemented non-interactive overlay rendering (safe boundary frame, center crosshair, and margin grid lines) to improve alignment precision without affecting layer edits.
+- Verified overlay toggle integration with a successful production build using `npm run build`.
+
 ## 0.0.24 - 2026-02-27
 - Added screenshot thumbnails to the left sidebar list for faster visual navigation.
 - Implemented new `src/components/ScreenshotThumbnail.jsx` that renders compact, read-only previews using Konva.

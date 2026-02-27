@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Layer, Rect, Stage, Transformer } from 'react-konva';
+import { Layer, Line, Rect, Stage, Transformer } from 'react-konva';
 import { renderLayerNode } from './canvas/renderLayerNode';
 import { commitTransformForLayer } from './canvas/stageTransform';
 
@@ -14,6 +14,9 @@ export default function CanvasStage({
   onCycleNextScreenshot,
   readOnly = false,
   label = null,
+  showSafeArea = false,
+  showCenterGuides = false,
+  showMarginGrid = false,
 }) {
   const frameRef = useRef(null);
   const transformerRef = useRef(null);
@@ -58,6 +61,15 @@ export default function CanvasStage({
   const previewWidth = Math.min(Math.max(canvasWrapWidth - 20, 280), 480);
   const previewScale = previewWidth / devicePreset.width;
   const previewHeight = devicePreset.height * previewScale;
+  const safeMarginX = Math.round(devicePreset.width * 0.05 * previewScale);
+  const safeMarginY = Math.round(devicePreset.height * 0.05 * previewScale);
+
+  const safeLeft = safeMarginX;
+  const safeTop = safeMarginY;
+  const safeWidth = Math.round(previewWidth - safeMarginX * 2);
+  const safeHeight = Math.round(previewHeight - safeMarginY * 2);
+  const centerX = Math.round(previewWidth / 2);
+  const centerY = Math.round(previewHeight / 2);
 
   useEffect(() => {
     const transformer = transformerRef.current;
@@ -220,6 +232,73 @@ export default function CanvasStage({
                 commitTransform,
                 isInteractive: !readOnly,
               }),
+            )}
+
+            {(showSafeArea || showCenterGuides || showMarginGrid) && (
+              <>
+                {showSafeArea && (
+                  <Rect
+                    x={safeLeft}
+                    y={safeTop}
+                    width={safeWidth}
+                    height={safeHeight}
+                    stroke="#22c55e"
+                    strokeWidth={1}
+                    dash={[6, 6]}
+                    listening={false}
+                  />
+                )}
+
+                {showCenterGuides && (
+                  <>
+                    <Line
+                      points={[centerX, 0, centerX, previewHeight]}
+                      stroke="#2563eb"
+                      strokeWidth={1}
+                      dash={[6, 4]}
+                      listening={false}
+                    />
+                    <Line
+                      points={[0, centerY, previewWidth, centerY]}
+                      stroke="#2563eb"
+                      strokeWidth={1}
+                      dash={[6, 4]}
+                      listening={false}
+                    />
+                  </>
+                )}
+
+                {showMarginGrid && (
+                  <>
+                    {[1, 2, 3].map((index) => {
+                      const x = safeLeft + (safeWidth / 4) * index;
+                      return (
+                        <Line
+                          key={`grid-v-${index}`}
+                          points={[x, safeTop, x, safeTop + safeHeight]}
+                          stroke="#f59e0b"
+                          strokeWidth={1}
+                          dash={[2, 5]}
+                          listening={false}
+                        />
+                      );
+                    })}
+                    {[1, 2, 3, 4, 5, 6, 7].map((index) => {
+                      const y = safeTop + (safeHeight / 8) * index;
+                      return (
+                        <Line
+                          key={`grid-h-${index}`}
+                          points={[safeLeft, y, safeLeft + safeWidth, y]}
+                          stroke="#f59e0b"
+                          strokeWidth={1}
+                          dash={[2, 5]}
+                          listening={false}
+                        />
+                      );
+                    })}
+                  </>
+                )}
+              </>
             )}
 
             {!readOnly && (

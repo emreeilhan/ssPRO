@@ -4,6 +4,7 @@ import ScreenshotEditor from './components/ScreenshotEditor';
 import { DEVICE_PRESET, EXPORT_LOCALES, MIN_SCREENSHOTS } from './constants';
 import { useThemePreference } from './hooks/useThemePreference';
 import { exportAllScreenshots, exportSingleScreenshot } from './utils/exportScreenshots';
+import { loadGoogleFontOnDemand } from './utils/fontLoader';
 import { getImageSource, getMockupScreenSource } from './utils/imageSources';
 import { getLayerWarnings } from './utils/layerChecks';
 import { createObjectURL, readImageDimensions } from './utils/imageFileUtils';
@@ -64,6 +65,26 @@ export default function App() {
       setSelectedLayerId(null);
     }
   }, [activeScreenshot, selectedLayerId]);
+
+  useEffect(() => {
+    const fontFamilies = new Set();
+
+    for (const shot of screenshots) {
+      for (const layer of shot.layers) {
+        if (layer.type !== 'text' || layer.visible === false) {
+          continue;
+        }
+
+        if (layer.fontFamily) {
+          fontFamilies.add(layer.fontFamily);
+        }
+      }
+    }
+
+    for (const fontFamily of fontFamilies) {
+      loadGoogleFontOnDemand(fontFamily);
+    }
+  }, [screenshots]);
 
   const allocateLayerId = () => `layer_${layerIdRef.current++}`;
 
