@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { TEXT_FONT_OPTIONS, TYPOGRAPHY_SCALES } from '../constants';
 
 const alignmentModes = ['left', 'center', 'right'];
@@ -21,6 +21,22 @@ function Field({ label, children }) {
       <span className="mono uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{label}</span>
       {children}
     </label>
+  );
+}
+
+function AccordionSection({ title, isOpen, onToggle, children }) {
+  return (
+    <section className="border border-line">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-2 py-1.5 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800"
+      >
+        <span className="mono text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-300">{title}</span>
+        <span className="mono text-[11px] text-zinc-500 dark:text-zinc-400">{isOpen ? '−' : '+'}</span>
+      </button>
+      {isOpen && <div className="grid gap-3 border-t border-line px-2 py-2">{children}</div>}
+    </section>
   );
 }
 
@@ -47,8 +63,16 @@ export default function LayerPanel({
   const orderedLayers = [...screenshot.layers].reverse();
   const selectedWarnings = warnings.filter((item) => item.layerId === selectedLayerId);
   const mockupUploadRef = useRef(null);
+  const [openSections, setOpenSections] = useState({
+    transform: true,
+    appearance: true,
+    type: true,
+  });
   const exportPercent = Math.max(0, Math.min(100, Math.round(exportProgress?.percent || 0)));
   const isBatchExport = exportProgress?.mode === 'batch';
+  const toggleSection = (key) => {
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   return (
     <aside className="panel animate-reveal border p-3" style={{ animationDelay: '200ms' }}>
@@ -160,95 +184,113 @@ export default function LayerPanel({
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-2">
-            <Field label="X">
+          <AccordionSection
+            title="Transform"
+            isOpen={openSections.transform}
+            onToggle={() => toggleSection('transform')}
+          >
+            <div className="grid grid-cols-3 gap-2">
+              <Field label="X">
+                <input
+                  type="number"
+                  value={Math.round(selectedLayer.x || 0)}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, { x: Number(event.target.value) || 0 })
+                  }
+                  className="border border-line px-2 py-1"
+                />
+              </Field>
+              <Field label="Y">
+                <input
+                  type="number"
+                  value={Math.round(selectedLayer.y || 0)}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, { y: Number(event.target.value) || 0 })
+                  }
+                  className="border border-line px-2 py-1"
+                />
+              </Field>
+              <Field label="Rotate">
+                <input
+                  type="number"
+                  value={Math.round(selectedLayer.rotation || 0)}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, { rotation: Number(event.target.value) || 0 })
+                  }
+                  className="border border-line px-2 py-1"
+                />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1">
+              <button
+                type="button"
+                onClick={() => onAlignLayer(selectedLayer.id, 'center-x')}
+                className="mono border border-line px-2 py-1 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Center X
+              </button>
+              <button
+                type="button"
+                onClick={() => onAlignLayer(selectedLayer.id, 'center-y')}
+                className="mono border border-line px-2 py-1 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Center Y
+              </button>
+              <button
+                type="button"
+                onClick={() => onAlignLayer(selectedLayer.id, 'center')}
+                className="mono border border-line px-2 py-1 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Center Both
+              </button>
+            </div>
+          </AccordionSection>
+
+          <AccordionSection
+            title="Appearance"
+            isOpen={openSections.appearance}
+            onToggle={() => toggleSection('appearance')}
+          >
+            <Field label={`Opacity (${Math.round((selectedLayer.opacity ?? 1) * 100)}%)`}>
               <input
-                type="number"
-                value={Math.round(selectedLayer.x || 0)}
+                type="range"
+                min="0.05"
+                max="1"
+                step="0.01"
+                value={selectedLayer.opacity ?? 1}
                 onChange={(event) =>
-                  onLayerUpdate(selectedLayer.id, { x: Number(event.target.value) || 0 })
+                  onLayerUpdate(selectedLayer.id, {
+                    opacity: Number(event.target.value),
+                  })
                 }
-                className="border border-line px-2 py-1"
               />
             </Field>
-            <Field label="Y">
-              <input
-                type="number"
-                value={Math.round(selectedLayer.y || 0)}
+
+            <Field label="Blend Mode">
+              <select
+                value={selectedLayer.blendMode || 'normal'}
                 onChange={(event) =>
-                  onLayerUpdate(selectedLayer.id, { y: Number(event.target.value) || 0 })
+                  onLayerUpdate(selectedLayer.id, {
+                    blendMode: event.target.value,
+                  })
                 }
                 className="border border-line px-2 py-1"
-              />
+              >
+                {blendModes.map((mode) => (
+                  <option key={mode.value} value={mode.value}>
+                    {mode.label}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <Field label="Rotate">
-              <input
-                type="number"
-                value={Math.round(selectedLayer.rotation || 0)}
-                onChange={(event) =>
-                  onLayerUpdate(selectedLayer.id, { rotation: Number(event.target.value) || 0 })
-                }
-                className="border border-line px-2 py-1"
-              />
-            </Field>
-          </div>
+          </AccordionSection>
 
-          <div className="grid grid-cols-3 gap-1">
-            <button
-              type="button"
-              onClick={() => onAlignLayer(selectedLayer.id, 'center-x')}
-              className="mono border border-line px-2 py-1 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Center X
-            </button>
-            <button
-              type="button"
-              onClick={() => onAlignLayer(selectedLayer.id, 'center-y')}
-              className="mono border border-line px-2 py-1 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Center Y
-            </button>
-            <button
-              type="button"
-              onClick={() => onAlignLayer(selectedLayer.id, 'center')}
-              className="mono border border-line px-2 py-1 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Center Both
-            </button>
-          </div>
-
-          <Field label={`Opacity (${Math.round((selectedLayer.opacity ?? 1) * 100)}%)`}>
-            <input
-              type="range"
-              min="0.05"
-              max="1"
-              step="0.01"
-              value={selectedLayer.opacity ?? 1}
-              onChange={(event) =>
-                onLayerUpdate(selectedLayer.id, {
-                  opacity: Number(event.target.value),
-                })
-              }
-            />
-          </Field>
-
-          <Field label="Blend Mode">
-            <select
-              value={selectedLayer.blendMode || 'normal'}
-              onChange={(event) =>
-                onLayerUpdate(selectedLayer.id, {
-                  blendMode: event.target.value,
-                })
-              }
-              className="border border-line px-2 py-1"
-            >
-              {blendModes.map((mode) => (
-                <option key={mode.value} value={mode.value}>
-                  {mode.label}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <AccordionSection
+            title="Type Specific"
+            isOpen={openSections.type}
+            onToggle={() => toggleSection('type')}
+          >
 
           {selectedLayer.type === 'image' && (
             <div className="grid grid-cols-2 gap-2">
@@ -637,6 +679,7 @@ export default function LayerPanel({
               </Field>
             </>
           )}
+          </AccordionSection>
         </div>
       ) : (
         <div className="mt-3 border-b border-line pb-3 text-xs text-zinc-500 dark:text-zinc-400">

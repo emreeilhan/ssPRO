@@ -197,8 +197,27 @@ export default function CanvasStage({
       }}
       onDragLeave={() => setIsDragActive(false)}
       onDrop={handleDrop}
-      className={`border border-line p-2 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-900/20' : 'bg-zinc-100/40 dark:bg-zinc-900/40'}`}
+      className={`relative border border-line p-2 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-900/20' : 'bg-zinc-100/40 dark:bg-zinc-900/40'}`}
     >
+      {!readOnly && (onCyclePrevScreenshot || onCycleNextScreenshot) && (
+        <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded border border-line bg-white/85 px-1 py-1 shadow-sm backdrop-blur dark:bg-zinc-900/80">
+          <button
+            type="button"
+            onClick={() => onCyclePrevScreenshot?.()}
+            className="mono border border-line px-1.5 py-0.5 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            Prev
+          </button>
+          <button
+            type="button"
+            onClick={() => onCycleNextScreenshot?.()}
+            className="mono border border-line px-1.5 py-0.5 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
       {label && (
         <div className="mono mb-2 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           {label}

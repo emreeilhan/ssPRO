@@ -1,5 +1,11 @@
 # CHANGELOGS
 
+## 0.0.27 - 2026-02-27
+- Added visible mini navigation controls (`Prev` / `Next`) on top of the editable canvas in `src/components/CanvasStage.jsx`.
+- Wired controls to existing screenshot cycle handlers used by horizontal wheel navigation for consistent behavior.
+- Kept controls hidden in read-only compare panels to avoid accidental context confusion.
+- Verified discoverable navigation control integration with a successful production build using `npm run build`.
+
 ## 0.0.26 - 2026-02-27
 - Reduced initial Google Fonts payload in `src/index.css` to only core UI families (`IBM Plex Sans`, `IBM Plex Mono`).
 - Added on-demand font loading utility in `src/utils/fontLoader.js` for text-layer font families used in projects.
