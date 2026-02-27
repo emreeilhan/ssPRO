@@ -29,6 +29,7 @@ export default function LayerPanel({
   selectedLayer,
   selectedLayerId,
   isExporting,
+  exportProgress,
   warnings,
   onSelectLayer,
   onLayerUpdate,
@@ -41,10 +42,13 @@ export default function LayerPanel({
   onMoveLayer,
   onExportSingle,
   onExportAll,
+  onCancelExport,
 }) {
   const orderedLayers = [...screenshot.layers].reverse();
   const selectedWarnings = warnings.filter((item) => item.layerId === selectedLayerId);
   const mockupUploadRef = useRef(null);
+  const exportPercent = Math.max(0, Math.min(100, Math.round(exportProgress?.percent || 0)));
+  const isBatchExport = exportProgress?.mode === 'batch';
 
   return (
     <aside className="panel animate-reveal border p-3" style={{ animationDelay: '200ms' }}>
@@ -613,6 +617,31 @@ export default function LayerPanel({
 
       <div className="mt-3 grid gap-2">
         <div className="mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Export</div>
+        {isExporting && exportProgress && (
+          <div className="grid gap-1 rounded border border-line px-2 py-2">
+            <div className="flex items-center justify-between">
+              <p className="mono text-[11px] uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
+                {exportProgress.message || 'Exporting...'}
+              </p>
+              <span className="mono text-[11px] text-zinc-500 dark:text-zinc-400">{exportPercent}%</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded bg-zinc-200 dark:bg-zinc-700">
+              <div
+                className="h-full bg-accent transition-[width] duration-200 ease-out"
+                style={{ width: `${exportPercent}%` }}
+              />
+            </div>
+            {isBatchExport && (
+              <button
+                type="button"
+                onClick={onCancelExport}
+                className="mono mt-1 border border-line px-2 py-1.5 text-xs uppercase tracking-wider text-alert hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                Cancel Export
+              </button>
+            )}
+          </div>
+        )}
         <button
           type="button"
           onClick={onExportSingle}

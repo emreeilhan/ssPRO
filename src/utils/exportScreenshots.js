@@ -4,6 +4,17 @@ import { saveAs } from 'file-saver';
 import { getImageSource, getMockupScreenSource } from './imageSources';
 
 const resolveBlendMode = (value) => (value && value !== 'normal' ? value : 'source-over');
+const ZIP_PHASE_START_PERCENT = 90;
+
+function throwIfAborted(signal) {
+  if (!signal?.aborted) {
+    return;
+  }
+
+  const error = new Error('Export cancelled.');
+  error.name = 'AbortError';
+  throw error;
+}
 
 function loadImage(source) {
   return new Promise((resolve, reject) => {
@@ -329,25 +340,62 @@ async function renderScreenshotBlob(screenshot, devicePreset) {
   return blob;
 }
 
-export async function exportSingleScreenshot({ screenshot, index, devicePreset }) {
+export async function exportSingleScreenshot({ screenshot, index, devicePreset, signal }) {
+  throwIfAborted(signal);
   const blob = await renderScreenshotBlob(screenshot, devicePreset);
+  throwIfAborted(signal);
   saveAs(blob, buildScreenshotFileName(index, devicePreset));
 }
 
-export async function exportAllScreenshots({ screenshots, devicePreset, locales = [] }) {
+export async function exportAllScreenshots({
+  screenshots,
+  devicePreset,
+  locales = [],
+  signal,
+  onProgress,
+}) {
+  throwIfAborted(signal);
   const zip = new JSZip();
   const localeList = Array.isArray(locales) && locales.length > 0 ? locales : ['en-US'];
   const deviceFolder = devicePreset.filenameSuffix;
+  const total = screenshots.length;
 
   for (let i = 0; i < screenshots.length; i += 1) {
+    throwIfAborted(signal);
     const blob = await renderScreenshotBlob(screenshots[i], devicePreset);
+    throwIfAborted(signal);
     const screenshotName = buildScreenshotFileName(i, devicePreset);
 
     for (const locale of localeList) {
       zip.file(`Root/${locale}/${deviceFolder}/${screenshotName}`, blob);
     }
+
+    const renderPercent = total > 0 ? Math.round(((i + 1) / total) * ZIP_PHASE_START_PERCENT) : 0;
+    onProgress?.({
+      phase: 'render',
+      current: i + 1,
+      total,
+      percent: renderPercent,
+      message: `Rendering ${i + 1}/${total}`,
+    });
   }
 
-  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  throwIfAborted(signal);
+  const zipBlob = await zip.generateAsync(
+    { type: 'blob' },
+    (metadata) => {
+      const zipPercent = Math.round(
+        ZIP_PHASE_START_PERCENT + (metadata.percent / 100) * (100 - ZIP_PHASE_START_PERCENT),
+      );
+      onProgress?.({
+        phase: 'zip',
+        current: total,
+        total,
+        percent: Math.min(100, zipPercent),
+        message: `Packaging ZIP ${Math.round(metadata.percent)}%`,
+      });
+    },
+  );
+  throwIfAborted(signal);
   saveAs(zipBlob, `app_store_screenshots_${devicePreset.filenameSuffix}.zip`);
 }

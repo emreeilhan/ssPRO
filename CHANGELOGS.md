@@ -1,5 +1,20 @@
 # CHANGELOGS
 
+## 0.0.19 - 2026-02-27
+- Added batch export progress reporting with phase-aware updates (`render` and `zip`) in `src/utils/exportScreenshots.js`.
+- Added cancellable export flow using `AbortController` and `AbortError` handling for long-running ZIP exports.
+- Added live export progress UI in `src/components/LayerPanel.jsx` with percent bar, status message, and `Cancel Export` action.
+- Wired progress/cancel state through `src/App.jsx` and `src/components/ScreenshotEditor.jsx` so users can monitor and interrupt long batch jobs safely.
+- Verified progress + cancel export integration with a successful production build using `npm run build`.
+
+## 0.0.18 - 2026-02-27
+- Expanded compliance validation in `src/utils/layerChecks.js` beyond horizontal overflow.
+- Added vertical overflow checks for text bounds against device height.
+- Added recommended safe-area checks using 5% horizontal/vertical margins.
+- Added minimum text size warnings for readability (`42px` threshold).
+- Added contrast warnings with ratio output against screenshot background (`4.5:1` normal text, `3:1` large text).
+- Verified updated validation pipeline with a successful production build using `npm run build`.
+
 ## 0.0.17 - 2026-02-27
 - Added command-stack based Undo/Redo in `src/App.jsx` with bounded history (`past/future`, max 60 steps) for screenshot and layer mutations.
 - Added keyboard shortcuts for history navigation: `Cmd/Ctrl+Z` (undo), `Shift+Cmd/Ctrl+Z` and `Ctrl+Y` (redo).

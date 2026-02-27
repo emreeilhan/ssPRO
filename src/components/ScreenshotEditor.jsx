@@ -16,6 +16,7 @@ export default function ScreenshotEditor({
   selectedLayerId,
   warnings,
   isExporting,
+  exportProgress,
   isDarkMode,
   onSelectScreenshot,
   onSetSelectedLayer,
@@ -40,6 +41,7 @@ export default function ScreenshotEditor({
   onMoveLayer,
   onExportSingle,
   onExportAll,
+  onCancelExport,
   onSaveProject,
   onLoadProject,
   onUndo,
@@ -344,6 +346,7 @@ export default function ScreenshotEditor({
           selectedLayer={selectedLayer}
           selectedLayerId={selectedLayerId}
           isExporting={isExporting}
+          exportProgress={exportProgress}
           warnings={warnings}
           onSelectLayer={onSetSelectedLayer}
           onLayerUpdate={onLayerUpdate}
@@ -356,6 +359,7 @@ export default function ScreenshotEditor({
           onMoveLayer={onMoveLayer}
           onExportSingle={onExportSingle}
           onExportAll={onExportAll}
+          onCancelExport={onCancelExport}
         />
       </main>
     </div>

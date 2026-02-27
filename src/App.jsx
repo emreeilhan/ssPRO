@@ -25,11 +25,13 @@ export default function App() {
   const [historyPast, setHistoryPast] = useState([]);
   const [historyFuture, setHistoryFuture] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(null);
   const { isDarkMode, toggleTheme } = useThemePreference();
 
   const screenshotIdRef = useRef(MIN_SCREENSHOTS + 1);
   const layerIdRef = useRef(1);
   const objectUrlRefCountRef = useRef(new Map());
+  const exportAbortControllerRef = useRef(null);
 
   const activeScreenshotIndex = screenshots.findIndex((item) => item.id === activeScreenshotId);
   const activeScreenshot =
@@ -612,6 +614,14 @@ export default function App() {
     }
 
     setIsExporting(true);
+    setExportProgress({
+      mode: 'single',
+      phase: 'render',
+      current: 0,
+      total: 1,
+      percent: 0,
+      message: 'Preparing export...',
+    });
 
     try {
       await exportSingleScreenshot({
@@ -620,26 +630,57 @@ export default function App() {
         devicePreset: DEVICE_PRESET,
       });
     } catch (error) {
-      window.alert(error.message || 'Single screenshot export failed.');
+      if (error.name !== 'AbortError') {
+        window.alert(error.message || 'Single screenshot export failed.');
+      }
     } finally {
       setIsExporting(false);
+      setExportProgress(null);
     }
   };
 
   const handleExportAll = async () => {
+    const controller = new AbortController();
+    exportAbortControllerRef.current = controller;
     setIsExporting(true);
+    setExportProgress({
+      mode: 'batch',
+      phase: 'render',
+      current: 0,
+      total: screenshots.length,
+      percent: 0,
+      message: 'Preparing batch export...',
+    });
 
     try {
       await exportAllScreenshots({
         screenshots,
         devicePreset: DEVICE_PRESET,
         locales: EXPORT_LOCALES,
+        signal: controller.signal,
+        onProgress: (progress) =>
+          setExportProgress((prev) => ({
+            mode: 'batch',
+            phase: progress.phase || prev?.phase || 'render',
+            current: progress.current ?? prev?.current ?? 0,
+            total: progress.total ?? prev?.total ?? screenshots.length,
+            percent: progress.percent ?? prev?.percent ?? 0,
+            message: progress.message || prev?.message || 'Exporting...',
+          })),
       });
     } catch (error) {
-      window.alert(error.message || 'Batch export failed.');
+      if (error.name !== 'AbortError') {
+        window.alert(error.message || 'Batch export failed.');
+      }
     } finally {
+      exportAbortControllerRef.current = null;
       setIsExporting(false);
+      setExportProgress(null);
     }
+  };
+
+  const handleCancelExport = () => {
+    exportAbortControllerRef.current?.abort();
   };
 
   const handleSaveProject = async () => {
@@ -722,6 +763,7 @@ export default function App() {
       selectedLayerId={selectedLayerId}
       warnings={warnings}
       isExporting={isExporting}
+      exportProgress={exportProgress}
       isDarkMode={isDarkMode}
       onSelectScreenshot={setActiveScreenshotId}
       onSetSelectedLayer={setSelectedLayerId}
@@ -746,6 +788,7 @@ export default function App() {
       onMoveLayer={handleMoveLayer}
       onExportSingle={handleExportSingle}
       onExportAll={handleExportAll}
+      onCancelExport={handleCancelExport}
       onSaveProject={handleSaveProject}
       onLoadProject={handleLoadProject}
       onUndo={handleUndo}
