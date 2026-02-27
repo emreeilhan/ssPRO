@@ -1,0 +1,427 @@
+import { TEXT_FONT_OPTIONS } from '../constants';
+
+const alignmentModes = ['left', 'center', 'right'];
+
+function Field({ label, children }) {
+  return (
+    <label className="grid gap-1 text-xs">
+      <span className="mono uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+export default function LayerPanel({
+  screenshot,
+  selectedLayer,
+  selectedLayerId,
+  isExporting,
+  warnings,
+  onSelectLayer,
+  onLayerUpdate,
+  onLayerDelete,
+  onLayerVisibility,
+  onMoveLayer,
+  onExportSingle,
+  onExportAll,
+}) {
+  const orderedLayers = [...screenshot.layers].reverse();
+  const selectedWarnings = warnings.filter((item) => item.layerId === selectedLayerId);
+
+  return (
+    <aside className="panel animate-reveal border p-3" style={{ animationDelay: '200ms' }}>
+      <div className="mb-3 flex items-center justify-between border-b border-line pb-2">
+        <h2 className="mono text-xs font-medium uppercase tracking-widest text-zinc-600 dark:text-zinc-300">Inspector</h2>
+        <span className="mono text-xs text-zinc-500 dark:text-zinc-400">{screenshot.layers.length} layers</span>
+      </div>
+
+      <div className="space-y-1.5 border-b border-line pb-3">
+        <div className="mono mb-1 text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Layer stack</div>
+        <div className="border border-line">
+          <div className="border-b border-line px-2 py-1 text-xs text-zinc-500 dark:text-zinc-400">Background (locked)</div>
+          {orderedLayers.length === 0 && (
+            <div className="px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">No layers yet</div>
+          )}
+          {orderedLayers.map((layer) => {
+            const isSelected = selectedLayerId === layer.id;
+
+            return (
+              <div
+                key={layer.id}
+                className={`grid grid-cols-[1fr_auto] items-center border-t border-line px-2 py-1.5 ${
+                  isSelected ? 'bg-blue-50/50 dark:bg-blue-500/20' : ''
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelectLayer(layer.id)}
+                  className="text-left"
+                >
+                  <div className="text-sm leading-4">{layer.name}</div>
+                  <div className="mono text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{layer.type}</div>
+                </button>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onLayerVisibility(layer.id)}
+                    className="mono border border-line px-1.5 py-0.5 text-[11px] hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    {layer.visible === false ? 'Show' : 'Hide'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onMoveLayer(layer.id, 'up')}
+                    className="mono border border-line px-1.5 py-0.5 text-[11px] hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onMoveLayer(layer.id, 'down')}
+                    className="mono border border-line px-1.5 py-0.5 text-[11px] hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    ↓
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {selectedLayer ? (
+        <div className="mt-3 grid gap-3 border-b border-line pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium">{selectedLayer.name}</div>
+              <div className="mono text-xs uppercase tracking-wide text-zinc-500">{selectedLayer.type}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => onLayerDelete(selectedLayer.id)}
+              className="mono border border-line px-2 py-1 text-xs uppercase text-alert hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              Delete
+            </button>
+          </div>
+
+          {selectedWarnings.length > 0 && (
+            <div className="border border-alert/40 bg-red-50 px-2 py-1.5 text-xs text-alert dark:bg-red-900/20">
+              {selectedWarnings.map((warning, index) => (
+                <p key={`${warning.type}-${index}`}>• {warning.message}</p>
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-3 gap-2">
+            <Field label="X">
+              <input
+                type="number"
+                value={Math.round(selectedLayer.x || 0)}
+                onChange={(event) =>
+                  onLayerUpdate(selectedLayer.id, { x: Number(event.target.value) || 0 })
+                }
+                className="border border-line px-2 py-1"
+              />
+            </Field>
+            <Field label="Y">
+              <input
+                type="number"
+                value={Math.round(selectedLayer.y || 0)}
+                onChange={(event) =>
+                  onLayerUpdate(selectedLayer.id, { y: Number(event.target.value) || 0 })
+                }
+                className="border border-line px-2 py-1"
+              />
+            </Field>
+            <Field label="Rotate">
+              <input
+                type="number"
+                value={Math.round(selectedLayer.rotation || 0)}
+                onChange={(event) =>
+                  onLayerUpdate(selectedLayer.id, { rotation: Number(event.target.value) || 0 })
+                }
+                className="border border-line px-2 py-1"
+              />
+            </Field>
+          </div>
+
+          {selectedLayer.type === 'image' && (
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Width">
+                <input
+                  type="number"
+                  value={Math.round(selectedLayer.width || 0)}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      width: Math.max(30, Number(event.target.value) || 30),
+                    })
+                  }
+                  className="border border-line px-2 py-1"
+                />
+              </Field>
+              <Field label="Height">
+                <input
+                  type="number"
+                  value={Math.round(selectedLayer.height || 0)}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      height: Math.max(30, Number(event.target.value) || 30),
+                    })
+                  }
+                  className="border border-line px-2 py-1"
+                />
+              </Field>
+            </div>
+          )}
+
+          {selectedLayer.type === 'shape' && (
+            <>
+              <div className="mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Style: {selectedLayer.shapeKind || 'orb'}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Width">
+                  <input
+                    type="number"
+                    value={Math.round(selectedLayer.width || 0)}
+                    onChange={(event) =>
+                      onLayerUpdate(selectedLayer.id, {
+                        width: Math.max(40, Number(event.target.value) || 40),
+                      })
+                    }
+                    className="border border-line px-2 py-1"
+                  />
+                </Field>
+                <Field label="Height">
+                  <input
+                    type="number"
+                    value={Math.round(selectedLayer.height || 0)}
+                    onChange={(event) =>
+                      onLayerUpdate(selectedLayer.id, {
+                        height: Math.max(40, Number(event.target.value) || 40),
+                      })
+                    }
+                    className="border border-line px-2 py-1"
+                  />
+                </Field>
+              </div>
+
+              <Field label="Decor Color">
+                <input
+                  type="color"
+                  value={selectedLayer.color || '#6fa8ff'}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      color: event.target.value,
+                    })
+                  }
+                  className="h-9 w-full border border-line"
+                />
+              </Field>
+
+              <Field label="Secondary Color">
+                <input
+                  type="color"
+                  value={selectedLayer.color2 || '#d6e5ff'}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      color2: event.target.value,
+                    })
+                  }
+                  className="h-9 w-full border border-line"
+                />
+              </Field>
+
+              <Field label={`Opacity (${Math.round((selectedLayer.opacity ?? 0.35) * 100)}%)`}>
+                <input
+                  type="range"
+                  min="0.05"
+                  max="1"
+                  step="0.01"
+                  value={selectedLayer.opacity ?? 0.35}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      opacity: Number(event.target.value),
+                    })
+                  }
+                />
+              </Field>
+
+              <Field label={`Blur (${Math.round(selectedLayer.blur || 28)}px)`}>
+                <input
+                  type="range"
+                  min="0"
+                  max="120"
+                  step="1"
+                  value={selectedLayer.blur || 28}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      blur: Number(event.target.value),
+                    })
+                  }
+                />
+              </Field>
+
+              {selectedLayer.shapeKind === 'ring' && (
+                <Field label={`Stroke (${Math.round(selectedLayer.strokeWidth || 20)}px)`}>
+                  <input
+                    type="range"
+                    min="2"
+                    max="120"
+                    step="1"
+                    value={selectedLayer.strokeWidth || 20}
+                    onChange={(event) =>
+                      onLayerUpdate(selectedLayer.id, {
+                        strokeWidth: Number(event.target.value),
+                      })
+                    }
+                  />
+                </Field>
+              )}
+
+              {(selectedLayer.shapeKind === 'pill' || selectedLayer.shapeKind === 'glow') && (
+                <Field label={`Corner Radius (${Math.round(selectedLayer.cornerRadius || 24)}px)`}>
+                  <input
+                    type="range"
+                    min="0"
+                    max="240"
+                    step="1"
+                    value={selectedLayer.cornerRadius || 24}
+                    onChange={(event) =>
+                      onLayerUpdate(selectedLayer.id, {
+                        cornerRadius: Number(event.target.value),
+                      })
+                    }
+                  />
+                </Field>
+              )}
+            </>
+          )}
+
+          {selectedLayer.type === 'text' && (
+            <>
+              <Field label="Text">
+                <textarea
+                  value={selectedLayer.text || ''}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      text: event.target.value,
+                    })
+                  }
+                  rows={4}
+                  className="resize-y border border-line px-2 py-1"
+                />
+              </Field>
+
+              <div className="mono text-xs text-zinc-500 dark:text-zinc-400">Characters: {(selectedLayer.text || '').length}</div>
+
+              <Field label={`Font Size (${selectedLayer.fontSize || 64}px)`}>
+                <input
+                  type="range"
+                  min="20"
+                  max="240"
+                  value={selectedLayer.fontSize || 64}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      fontSize: Number(event.target.value),
+                    })
+                  }
+                />
+              </Field>
+
+              <Field label="Font Family">
+                <select
+                  value={selectedLayer.fontFamily || 'IBM Plex Sans'}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      fontFamily: event.target.value,
+                    })
+                  }
+                  className="border border-line px-2 py-1"
+                >
+                  {TEXT_FONT_OPTIONS.map((fontName) => (
+                    <option key={fontName} value={fontName}>
+                      {fontName}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Text Width">
+                <input
+                  type="number"
+                  value={Math.round(selectedLayer.width || 0)}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      width: Math.max(80, Number(event.target.value) || 80),
+                    })
+                  }
+                  className="border border-line px-2 py-1"
+                />
+              </Field>
+
+              <Field label="Text Color">
+                <input
+                  type="color"
+                  value={selectedLayer.color || '#101010'}
+                  onChange={(event) =>
+                    onLayerUpdate(selectedLayer.id, {
+                      color: event.target.value,
+                    })
+                  }
+                  className="h-9 w-full border border-line"
+                />
+              </Field>
+
+              <Field label="Alignment">
+                <div className="grid grid-cols-3 gap-1">
+                  {alignmentModes.map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => onLayerUpdate(selectedLayer.id, { align: mode })}
+                      className={`mono border px-2 py-1 text-xs uppercase ${
+                        selectedLayer.align === mode
+                          ? 'border-accent text-accent'
+                          : 'border-line text-zinc-600 dark:text-zinc-300'
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="mt-3 border-b border-line pb-3 text-xs text-zinc-500 dark:text-zinc-400">
+          Select a layer to edit properties.
+        </div>
+      )}
+
+      <div className="mt-3 grid gap-2">
+        <div className="mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Export</div>
+        <button
+          type="button"
+          onClick={onExportSingle}
+          disabled={isExporting}
+          className="mono border border-line px-2 py-2 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50"
+        >
+          {isExporting ? 'Exporting...' : 'Export Active PNG'}
+        </button>
+        <button
+          type="button"
+          onClick={onExportAll}
+          disabled={isExporting}
+          className="mono border border-accent px-2 py-2 text-xs uppercase tracking-wider text-accent hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50"
+        >
+          {isExporting ? 'Building ZIP...' : 'Export All (ZIP)'}
+        </button>
+        <p className="mono text-[11px] text-zinc-500 dark:text-zinc-400">Always exported at 1290x2796 PNG, preview scaling ignored.</p>
+      </div>
+    </aside>
+  );
+}
