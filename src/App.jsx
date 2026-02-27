@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { saveAs } from 'file-saver';
 import ScreenshotEditor from './components/ScreenshotEditor';
 import { DEVICE_PRESET, EXPORT_LOCALES, MIN_SCREENSHOTS } from './constants';
 import { useThemePreference } from './hooks/useThemePreference';
@@ -7,6 +8,7 @@ import { getImageSource, getMockupScreenSource } from './utils/imageSources';
 import { getLayerWarnings } from './utils/layerChecks';
 import { createObjectURL, readImageDimensions } from './utils/imageFileUtils';
 import { buildDecorPreset, buildMockupPreset } from './utils/layerPresets';
+import { hydrateProject, serializeProject } from './utils/projectPersistence';
 import {
   buildEmptyScreenshot,
   createInitialScreenshots,
@@ -14,10 +16,14 @@ import {
   reorderByIndex,
 } from './utils/screenshotHelpers';
 
+const HISTORY_LIMIT = 60;
+
 export default function App() {
   const [screenshots, setScreenshots] = useState(createInitialScreenshots);
   const [activeScreenshotId, setActiveScreenshotId] = useState(1);
   const [selectedLayerId, setSelectedLayerId] = useState(null);
+  const [historyPast, setHistoryPast] = useState([]);
+  const [historyFuture, setHistoryFuture] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   const { isDarkMode, toggleTheme } = useThemePreference();
 
@@ -59,31 +65,45 @@ export default function App() {
 
   const allocateLayerId = () => `layer_${layerIdRef.current++}`;
 
-  const retainObjectUrl = (url) => {
-    if (!url) {
-      return;
-    }
+  const isManagedObjectUrl = (url) => typeof url === 'string' && url.startsWith('blob:');
 
-    const refs = objectUrlRefCountRef.current;
-    refs.set(url, (refs.get(url) || 0) + 1);
+  const appendSnapshotUrls = (sourceScreenshots, counts) => {
+    for (const shot of sourceScreenshots) {
+      for (const layer of shot.layers) {
+        const imageSrc = getImageSource(layer);
+        const screenSrc = getMockupScreenSource(layer);
+
+        if (isManagedObjectUrl(imageSrc)) {
+          counts.set(imageSrc, (counts.get(imageSrc) || 0) + 1);
+        }
+
+        if (isManagedObjectUrl(screenSrc)) {
+          counts.set(screenSrc, (counts.get(screenSrc) || 0) + 1);
+        }
+      }
+    }
   };
 
-  const releaseObjectUrl = (url) => {
-    if (!url) {
-      return;
+  useEffect(() => {
+    const nextCounts = new Map();
+    appendSnapshotUrls(screenshots, nextCounts);
+
+    for (const entry of historyPast) {
+      appendSnapshotUrls(entry.screenshots, nextCounts);
     }
 
-    const refs = objectUrlRefCountRef.current;
-    const count = refs.get(url) || 0;
-
-    if (count <= 1) {
-      refs.delete(url);
-      window.URL.revokeObjectURL(url);
-      return;
+    for (const entry of historyFuture) {
+      appendSnapshotUrls(entry.screenshots, nextCounts);
     }
 
-    refs.set(url, count - 1);
-  };
+    for (const url of objectUrlRefCountRef.current.keys()) {
+      if (!nextCounts.has(url)) {
+        window.URL.revokeObjectURL(url);
+      }
+    }
+
+    objectUrlRefCountRef.current = nextCounts;
+  }, [historyFuture, historyPast, screenshots]);
 
   useEffect(
     () => () => {
@@ -95,10 +115,48 @@ export default function App() {
     [],
   );
 
-  const updateActiveScreenshot = (updater) => {
-    setScreenshots((prev) =>
-      prev.map((item) => (item.id === activeScreenshotId ? updater(item) : item)),
+  const commitProjectChange = ({
+    nextScreenshots,
+    nextActiveScreenshotId = activeScreenshotId,
+    nextSelectedLayerId = selectedLayerId,
+  }) => {
+    const hasScreenshotsChange = nextScreenshots !== screenshots;
+    const hasActiveChange = nextActiveScreenshotId !== activeScreenshotId;
+    const hasSelectedChange = nextSelectedLayerId !== selectedLayerId;
+
+    if (!hasScreenshotsChange && !hasActiveChange && !hasSelectedChange) {
+      return;
+    }
+
+    setHistoryPast((prev) => {
+      const next = [...prev, { screenshots, activeScreenshotId, selectedLayerId }];
+      return next.slice(-HISTORY_LIMIT);
+    });
+    setHistoryFuture([]);
+    setScreenshots(nextScreenshots);
+    setActiveScreenshotId(nextActiveScreenshotId);
+    setSelectedLayerId(nextSelectedLayerId);
+  };
+
+  const updateActiveScreenshot = (updater, options = {}) => {
+    if (!activeScreenshot) {
+      return;
+    }
+
+    const updated = updater(activeScreenshot);
+    if (!updated || updated === activeScreenshot) {
+      return;
+    }
+
+    const nextScreenshots = screenshots.map((item) =>
+      item.id === activeScreenshotId ? updated : item,
     );
+
+    commitProjectChange({
+      nextScreenshots,
+      nextActiveScreenshotId: options.nextActiveScreenshotId ?? activeScreenshotId,
+      nextSelectedLayerId: options.nextSelectedLayerId ?? selectedLayerId,
+    });
   };
 
   const handleBackgroundChange = (color) => {
@@ -110,9 +168,11 @@ export default function App() {
     screenshotIdRef.current += 1;
     const newScreenshot = buildEmptyScreenshot(nextId);
 
-    setScreenshots((prev) => [...prev, newScreenshot]);
-    setActiveScreenshotId(nextId);
-    setSelectedLayerId(null);
+    commitProjectChange({
+      nextScreenshots: [...screenshots, newScreenshot],
+      nextActiveScreenshotId: nextId,
+      nextSelectedLayerId: null,
+    });
   };
 
   const handleDuplicateScreenshot = () => {
@@ -132,22 +192,17 @@ export default function App() {
       })),
     };
 
-    for (const layer of clone.layers) {
-      retainObjectUrl(getImageSource(layer));
-      retainObjectUrl(getMockupScreenSource(layer));
-    }
+    const sourceIndex = screenshots.findIndex((item) => item.id === activeScreenshot.id);
+    const nextScreenshots =
+      sourceIndex < 0
+        ? [...screenshots, clone]
+        : [...screenshots.slice(0, sourceIndex + 1), clone, ...screenshots.slice(sourceIndex + 1)];
 
-    setScreenshots((prev) => {
-      const sourceIndex = prev.findIndex((item) => item.id === activeScreenshot.id);
-      if (sourceIndex < 0) {
-        return [...prev, clone];
-      }
-
-      return [...prev.slice(0, sourceIndex + 1), clone, ...prev.slice(sourceIndex + 1)];
+    commitProjectChange({
+      nextScreenshots,
+      nextActiveScreenshotId: nextId,
+      nextSelectedLayerId: null,
     });
-
-    setActiveScreenshotId(nextId);
-    setSelectedLayerId(null);
   };
 
   const handleDeleteScreenshot = () => {
@@ -155,35 +210,31 @@ export default function App() {
       return;
     }
 
-    for (const layer of activeScreenshot.layers) {
-      releaseObjectUrl(getImageSource(layer));
-      releaseObjectUrl(getMockupScreenSource(layer));
-    }
-
     const index = activeScreenshotIndex;
-    setScreenshots((prev) => prev.filter((item) => item.id !== activeScreenshot.id));
-
+    const nextScreenshots = screenshots.filter((item) => item.id !== activeScreenshot.id);
     const fallback = screenshots[index + 1] || screenshots[index - 1];
-    if (fallback) {
-      setActiveScreenshotId(fallback.id);
-    }
+    const nextActiveScreenshotId = fallback ? fallback.id : activeScreenshotId;
 
-    setSelectedLayerId(null);
+    commitProjectChange({
+      nextScreenshots,
+      nextActiveScreenshotId,
+      nextSelectedLayerId: null,
+    });
   };
 
   const handleMoveScreenshot = (screenshotId, direction) => {
-    setScreenshots((prev) => {
-      const index = prev.findIndex((item) => item.id === screenshotId);
-      if (index < 0) {
-        return prev;
-      }
+    const index = screenshots.findIndex((item) => item.id === screenshotId);
+    if (index < 0) {
+      return;
+    }
 
-      const target = direction === 'up' ? index - 1 : index + 1;
-      if (target < 0 || target >= prev.length) {
-        return prev;
-      }
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= screenshots.length) {
+      return;
+    }
 
-      return reorderByIndex(prev, index, target);
+    commitProjectChange({
+      nextScreenshots: reorderByIndex(screenshots, index, target),
     });
   };
 
@@ -231,9 +282,7 @@ export default function App() {
         ...item,
         layers: [...item.layers, nextLayer],
       };
-    });
-
-    setSelectedLayerId(layerId);
+    }, { nextSelectedLayerId: layerId });
   };
 
   const handleAddImageLayers = async (fileList) => {
@@ -278,15 +327,15 @@ export default function App() {
         height: layerHeight,
         rotation: 0,
       });
-      retainObjectUrl(imageSrc);
     }
 
-    updateActiveScreenshot((item) => ({
-      ...item,
-      layers: [...item.layers, ...parsedLayers],
-    }));
-
-    setSelectedLayerId(parsedLayers[parsedLayers.length - 1].id);
+    updateActiveScreenshot(
+      (item) => ({
+        ...item,
+        layers: [...item.layers, ...parsedLayers],
+      }),
+      { nextSelectedLayerId: parsedLayers[parsedLayers.length - 1].id },
+    );
   };
 
   const handleAddDecorLayer = (kind = 'orb') => {
@@ -321,9 +370,7 @@ export default function App() {
         ...item,
         layers: [...item.layers, nextLayer],
       };
-    });
-
-    setSelectedLayerId(layerId);
+    }, { nextSelectedLayerId: layerId });
   };
 
   const handleAddMockupLayer = (style = 'realistic') => {
@@ -358,15 +405,11 @@ export default function App() {
         screenImageSrc: getImageSource(lastImageLayer),
       };
 
-      retainObjectUrl(nextLayer.screenImageSrc);
-
       return {
         ...item,
         layers: [...item.layers, nextLayer],
       };
-    });
-
-    setSelectedLayerId(layerId);
+    }, { nextSelectedLayerId: layerId });
   };
 
   const handleMockupScreenUpload = async (layerId, file) => {
@@ -387,20 +430,6 @@ export default function App() {
       }
 
       const nextLayer = { ...currentLayer, ...patch };
-      const currentImageSrc = getImageSource(currentLayer);
-      const nextImageSrc = getImageSource(nextLayer);
-      const currentScreenSrc = getMockupScreenSource(currentLayer);
-      const nextScreenSrc = getMockupScreenSource(nextLayer);
-
-      if (currentImageSrc !== nextImageSrc) {
-        releaseObjectUrl(currentImageSrc);
-        retainObjectUrl(nextImageSrc);
-      }
-
-      if (currentScreenSrc !== nextScreenSrc) {
-        releaseObjectUrl(currentScreenSrc);
-        retainObjectUrl(nextScreenSrc);
-      }
 
       return {
         ...item,
@@ -410,22 +439,13 @@ export default function App() {
   };
 
   const handleLayerDelete = (layerId) => {
-    updateActiveScreenshot((item) => {
-      const currentLayer = item.layers.find((layer) => layer.id === layerId);
-      if (currentLayer) {
-        releaseObjectUrl(getImageSource(currentLayer));
-        releaseObjectUrl(getMockupScreenSource(currentLayer));
-      }
-
-      return {
+    updateActiveScreenshot(
+      (item) => ({
         ...item,
         layers: item.layers.filter((layer) => layer.id !== layerId),
-      };
-    });
-
-    if (selectedLayerId === layerId) {
-      setSelectedLayerId(null);
-    }
+      }),
+      { nextSelectedLayerId: selectedLayerId === layerId ? null : selectedLayerId },
+    );
   };
 
   const handleLayerVisibility = (layerId) => {
@@ -447,6 +467,7 @@ export default function App() {
   };
 
   const handleDuplicateLayer = (layerId) => {
+    let duplicateId = null;
     updateActiveScreenshot((item) => {
       const index = item.layers.findIndex((layer) => layer.id === layerId);
       if (index < 0) {
@@ -462,20 +483,16 @@ export default function App() {
         x: Math.round((source.x || 0) + 26),
         y: Math.round((source.y || 0) + 26),
       };
-
-      retainObjectUrl(getImageSource(copy));
-      retainObjectUrl(getMockupScreenSource(copy));
+      duplicateId = copy.id;
 
       const nextLayers = [...item.layers];
       nextLayers.splice(index + 1, 0, copy);
-
-      setSelectedLayerId(copy.id);
 
       return {
         ...item,
         layers: nextLayers,
       };
-    });
+    }, { nextSelectedLayerId: duplicateId || selectedLayerId });
   };
 
   const handleAlignLayer = (layerId, mode) => {
@@ -561,6 +578,87 @@ export default function App() {
     }
   };
 
+  const handleSaveProject = async () => {
+    setIsExporting(true);
+
+    try {
+      const payload = await serializeProject({
+        screenshots,
+        activeScreenshotId,
+      });
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      saveAs(blob, `sspro-project-${timestamp}.json`);
+    } catch (error) {
+      window.alert(error.message || 'Project save failed.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleLoadProject = async (file) => {
+    if (!file) {
+      return;
+    }
+
+    setIsExporting(true);
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const hydrated = await hydrateProject(parsed);
+
+      for (const shot of screenshots) {
+        for (const layer of shot.layers) {
+          releaseObjectUrl(getImageSource(layer));
+          releaseObjectUrl(getMockupScreenSource(layer));
+        }
+      }
+
+      const loadedScreenshots = hydrated.screenshots;
+      setScreenshots(loadedScreenshots);
+
+      for (const shot of loadedScreenshots) {
+        for (const layer of shot.layers) {
+          retainObjectUrl(getImageSource(layer));
+          retainObjectUrl(getMockupScreenSource(layer));
+        }
+      }
+
+      const validActiveId = loadedScreenshots.some((item) => item.id === hydrated.activeScreenshotId)
+        ? hydrated.activeScreenshotId
+        : loadedScreenshots[0]?.id;
+
+      if (validActiveId) {
+        setActiveScreenshotId(validActiveId);
+      }
+
+      setSelectedLayerId(null);
+
+      const maxScreenshotId = loadedScreenshots.reduce(
+        (max, item) => Math.max(max, Number(item.id) || 0),
+        0,
+      );
+      screenshotIdRef.current = Math.max(MIN_SCREENSHOTS + 1, maxScreenshotId + 1);
+
+      const maxLayerNumber = loadedScreenshots.reduce((max, item) => {
+        const shotMax = item.layers.reduce((layerMax, layer) => {
+          const match = String(layer.id || '').match(/^layer_(\d+)$/);
+          if (!match) {
+            return layerMax;
+          }
+          return Math.max(layerMax, Number(match[1]) || 0);
+        }, 0);
+        return Math.max(max, shotMax);
+      }, 0);
+      layerIdRef.current = maxLayerNumber + 1;
+    } catch (error) {
+      window.alert(error.message || 'Project load failed.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <ScreenshotEditor
       devicePreset={DEVICE_PRESET}
@@ -596,6 +694,8 @@ export default function App() {
       onMoveLayer={handleMoveLayer}
       onExportSingle={handleExportSingle}
       onExportAll={handleExportAll}
+      onSaveProject={handleSaveProject}
+      onLoadProject={handleLoadProject}
       onToggleTheme={toggleTheme}
     />
   );

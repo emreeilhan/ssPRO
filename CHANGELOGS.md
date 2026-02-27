@@ -1,5 +1,12 @@
 # CHANGELOGS
 
+## 0.0.16 - 2026-02-27
+- Added project persistence workflow with `Save Project` and `Load Project` actions in the editor header.
+- Implemented portable JSON project format in `src/utils/projectPersistence.js` with schema/version validation for safer team handoff.
+- Added image source serialization that embeds image payloads only at save-time, then restores them as object URLs on load to keep runtime state memory-efficient.
+- Added load-time recovery for app runtime counters (`screenshotIdRef`, `layerIdRef`) and active screenshot selection consistency.
+- Verified project persistence changes with a successful production build using `npm run build`.
+
 ## 0.0.15 - 2026-02-27
 - Replaced image layer storage from base64 `dataUrl` strings to lightweight `object URL` references (`imageSrc`, `screenImageSrc`) in app state.
 - Added centralized object URL reference counting in `src/App.jsx` to prevent memory leaks across duplicate/delete/update flows.

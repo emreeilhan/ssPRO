@@ -40,9 +40,12 @@ export default function ScreenshotEditor({
   onMoveLayer,
   onExportSingle,
   onExportAll,
+  onSaveProject,
+  onLoadProject,
   onToggleTheme,
 }) {
   const fileInputRef = useRef(null);
+  const projectInputRef = useRef(null);
 
   if (!activeScreenshot) {
     return null;
@@ -54,12 +57,24 @@ export default function ScreenshotEditor({
     fileInputRef.current?.click();
   };
 
+  const openProjectDialog = () => {
+    projectInputRef.current?.click();
+  };
+
   const handleFileSelect = async (event) => {
     const files = event.target.files;
     if (files && files.length) {
       await onAddImageLayers(files);
     }
 
+    event.target.value = '';
+  };
+
+  const handleProjectSelect = async (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      await onLoadProject(file);
+    }
     event.target.value = '';
   };
 
@@ -73,6 +88,20 @@ export default function ScreenshotEditor({
           </p>
         </div>
         <div className="flex items-center gap-2 md:justify-end">
+          <button
+            type="button"
+            onClick={onSaveProject}
+            className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            Save Project
+          </button>
+          <button
+            type="button"
+            onClick={openProjectDialog}
+            className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            Load Project
+          </button>
           <button
             type="button"
             onClick={onToggleTheme}
@@ -275,6 +304,13 @@ export default function ScreenshotEditor({
             accept="image/png,image/jpeg"
             multiple
             onChange={handleFileSelect}
+            className="hidden"
+          />
+          <input
+            ref={projectInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={handleProjectSelect}
             className="hidden"
           />
 
