@@ -109,6 +109,7 @@ export default function LayerPanel({
           onClick={onCollapse}
           className="h-8 w-8 p-0 text-xs"
           aria-label="Collapse inspector panel"
+          title="Collapse inspector panel"
         >
           {'>'}
         </Button>
@@ -171,6 +172,8 @@ export default function LayerPanel({
                     type="button"
                     onClick={() => onMoveLayer(layer.id, 'up')}
                     className="h-7 min-w-7 p-0 text-[11px]"
+                    aria-label="Move layer up"
+                    title="Move layer up"
                   >
                     ^
                   </Button>
@@ -178,6 +181,8 @@ export default function LayerPanel({
                     type="button"
                     onClick={() => onMoveLayer(layer.id, 'down')}
                     className="h-7 min-w-7 p-0 text-[11px]"
+                    aria-label="Move layer down"
+                    title="Move layer down"
                   >
                     v
                   </Button>

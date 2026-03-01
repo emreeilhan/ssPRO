@@ -359,6 +359,7 @@ export default function ScreenshotEditor({
                 className="h-8 w-8 p-0 text-xs"
                 onClick={() => setIsLeftPanelCollapsed(false)}
                 aria-label="Expand screenshots panel"
+                title="Expand screenshots panel"
               >
                 {'>'}
               </Button>
@@ -374,6 +375,7 @@ export default function ScreenshotEditor({
                   className="h-8 w-8 p-0 text-xs"
                   onClick={() => setIsLeftPanelCollapsed(true)}
                   aria-label="Collapse screenshots panel"
+                  title="Collapse screenshots panel"
                 >
                   {'<'}
                 </Button>
@@ -474,10 +476,10 @@ export default function ScreenshotEditor({
 
         <div className="topbar-modern__controls">
           <TopbarGroup label="Edit">
-            <Button variant="ghost" size="sm" className="topbar-btn" onClick={onUndo} disabled={!canUndo}>
+            <Button variant="ghost" size="sm" className="topbar-btn" onClick={onUndo} disabled={!canUndo} title="Undo (Cmd/Ctrl+Z)">
               Undo
             </Button>
-            <Button variant="ghost" size="sm" className="topbar-btn" onClick={onRedo} disabled={!canRedo}>
+            <Button variant="ghost" size="sm" className="topbar-btn" onClick={onRedo} disabled={!canRedo} title="Redo (Cmd/Ctrl+Shift+Z or Cmd/Ctrl+Y)">
               Redo
             </Button>
           </TopbarGroup>
@@ -492,6 +494,7 @@ export default function ScreenshotEditor({
               size="sm"
               onClick={() => setIsFocusedMode((prev) => !prev)}
               className={`topbar-btn ${isFocusedMode ? 'topbar-focus-active' : ''}`}
+              title="Focus Mode (F)"
             >
               {isFocusedMode ? 'Exit Focus' : 'Focus Mode'}
             </Button>
@@ -911,6 +914,7 @@ export default function ScreenshotEditor({
                   className="h-8 w-8 p-0 text-xs"
                   onClick={() => setIsRightPanelCollapsed(false)}
                   aria-label="Expand inspector panel"
+                  title="Expand inspector panel"
                 >
                   {'<'}
                 </Button>
