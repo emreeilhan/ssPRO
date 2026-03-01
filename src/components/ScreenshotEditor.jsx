@@ -114,7 +114,7 @@ export default function ScreenshotEditor({
   onAddScreenshot,
   onDuplicateScreenshot,
   onDeleteScreenshot,
-  onMoveScreenshot,
+  onReorderScreenshot,
   onCyclePrevScreenshot,
   onCycleNextScreenshot,
   onAddTextLayer,
@@ -152,6 +152,8 @@ export default function ScreenshotEditor({
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
+  const [dragScreenshotId, setDragScreenshotId] = useState(null);
+  const [dropScreenshotId, setDropScreenshotId] = useState(null);
 
   if (!activeScreenshot) {
     return null;
@@ -355,15 +357,43 @@ export default function ScreenshotEditor({
                 <div className="space-y-2">
                   {screenshots.map((shot, index) => {
                     const isActive = shot.id === activeScreenshotId;
+                    const isDropTarget = dropScreenshotId === shot.id && dragScreenshotId !== shot.id;
 
                     return (
                       <div
                         key={shot.id}
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.effectAllowed = 'move';
+                          event.dataTransfer.setData('text/plain', String(shot.id));
+                          setDragScreenshotId(shot.id);
+                          setDropScreenshotId(null);
+                        }}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = 'move';
+                          if (dragScreenshotId !== shot.id) {
+                            setDropScreenshotId(shot.id);
+                          }
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const draggedId = Number(event.dataTransfer.getData('text/plain')) || dragScreenshotId;
+                          if (draggedId && draggedId !== shot.id) {
+                            onReorderScreenshot(draggedId, shot.id);
+                          }
+                          setDragScreenshotId(null);
+                          setDropScreenshotId(null);
+                        }}
+                        onDragEnd={() => {
+                          setDragScreenshotId(null);
+                          setDropScreenshotId(null);
+                        }}
                         className={`grid grid-cols-[1fr_auto] items-start rounded-xl px-2 py-2 ${
                           isActive
                             ? 'bg-blue-50/70 dark:bg-blue-500/20'
                             : 'bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/40'
-                        }`}
+                        } ${isDropTarget ? 'ring-2 ring-blue-300 dark:ring-blue-500/60' : ''}`}
                       >
                         <button
                           type="button"
@@ -380,13 +410,8 @@ export default function ScreenshotEditor({
                             </div>
                           </div>
                         </button>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" className="h-7 min-w-7 p-0 text-xs" onClick={() => onMoveScreenshot(shot.id, 'up')}>
-                            ^
-                          </Button>
-                          <Button variant="ghost" className="h-7 min-w-7 p-0 text-xs" onClick={() => onMoveScreenshot(shot.id, 'down')}>
-                            v
-                          </Button>
+                        <div className="type-meta flex items-center px-2">
+                          Drag
                         </div>
                       </div>
                     );

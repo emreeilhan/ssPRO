@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Layer, Line, Rect, Stage, Transformer } from 'react-konva';
 import { renderLayerNode } from './canvas/renderLayerNode';
 import { commitTransformForLayer } from './canvas/stageTransform';
+import Button from './ui/Button';
 
 export default function CanvasStage({
   screenshot,
@@ -214,20 +215,18 @@ export default function CanvasStage({
     >
       {!readOnly && (onCyclePrevScreenshot || onCycleNextScreenshot) && (
         <div className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-lg bg-white/90 px-1 py-1 shadow-sm backdrop-blur dark:bg-zinc-900/80">
-          <button
-            type="button"
+          <Button
             onClick={() => onCyclePrevScreenshot?.()}
-            className="btn btn-ghost h-7 px-2 py-0 text-[11px]"
+            className="h-7 px-2 py-0 text-[11px]"
           >
             Prev
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={() => onCycleNextScreenshot?.()}
-            className="btn btn-ghost h-7 px-2 py-0 text-[11px]"
+            className="h-7 px-2 py-0 text-[11px]"
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
 

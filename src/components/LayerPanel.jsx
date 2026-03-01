@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { TEXT_FONT_OPTIONS, TYPOGRAPHY_SCALES } from '../constants';
 import Button from './ui/Button';
-import { inputBaseClassName } from './ui/Input';
+import { Input, Select, Textarea, inputBaseClassName } from './ui/Input';
 
 const alignmentModes = ['left', 'center', 'right'];
 const blendModes = [
@@ -215,29 +215,26 @@ export default function LayerPanel({
           >
             <div className="grid grid-cols-3 gap-2">
               <Field label="X">
-                <input
+                <Input
                   type="number"
                   value={Math.round(selectedLayer.x || 0)}
                   onChange={(event) => onLayerUpdate(selectedLayer.id, { x: Number(event.target.value) || 0 })}
-                  className={inputClassName}
                 />
               </Field>
               <Field label="Y">
-                <input
+                <Input
                   type="number"
                   value={Math.round(selectedLayer.y || 0)}
                   onChange={(event) => onLayerUpdate(selectedLayer.id, { y: Number(event.target.value) || 0 })}
-                  className={inputClassName}
                 />
               </Field>
               <Field label="Rotate">
-                <input
+                <Input
                   type="number"
                   value={Math.round(selectedLayer.rotation || 0)}
                   onChange={(event) =>
                     onLayerUpdate(selectedLayer.id, { rotation: Number(event.target.value) || 0 })
                   }
-                  className={inputClassName}
                 />
               </Field>
             </div>
@@ -272,7 +269,7 @@ export default function LayerPanel({
             </Field>
 
             <Field label="Blend Mode">
-              <select
+              <Select
                 value={selectedLayer.blendMode || 'normal'}
                 onChange={(event) => onLayerUpdate(selectedLayer.id, { blendMode: event.target.value })}
                 className={inputClassName}
@@ -421,7 +418,7 @@ export default function LayerPanel({
             {selectedLayer.type === 'mockup' && (
               <>
                 <Field label="Mockup Style">
-                  <select
+                  <Select
                     value={selectedLayer.mockupStyle || 'realistic'}
                     onChange={(event) => onLayerUpdate(selectedLayer.id, { mockupStyle: event.target.value })}
                     className={inputClassName}
@@ -506,7 +503,6 @@ export default function LayerPanel({
                 <Button
                   type="button"
                   onClick={() => mockupUploadRef.current?.click()}
-                  className=""
                 >
                   Upload Screen Image
                 </Button>
@@ -529,7 +525,7 @@ export default function LayerPanel({
             {selectedLayer.type === 'text' && (
               <>
                 <Field label="Text">
-                  <textarea
+                  <Textarea
                     value={selectedLayer.text || ''}
                     onChange={(event) => onLayerUpdate(selectedLayer.id, { text: event.target.value })}
                     rows={4}
@@ -552,6 +548,7 @@ export default function LayerPanel({
                         <Button
                           key={preset.id}
                           type="button"
+                          variant={isActive ? 'primary' : 'ghost'}
                           onClick={() =>
                             onLayerUpdate(selectedLayer.id, {
                               fontSize: preset.fontSize,
@@ -559,11 +556,7 @@ export default function LayerPanel({
                               width: preset.width,
                             })
                           }
-                          className={`btn ${
-                            isActive
-                              ? 'btn-primary'
-                              : 'btn-ghost'
-                          } text-xs`}
+                          className="text-xs"
                         >
                           {preset.label}
                         </Button>
@@ -583,7 +576,7 @@ export default function LayerPanel({
                 </Field>
 
                 <Field label="Font Family">
-                  <select
+                  <Select
                     value={selectedLayer.fontFamily || 'IBM Plex Sans'}
                     onChange={(event) => onLayerUpdate(selectedLayer.id, { fontFamily: event.target.value })}
                     className={inputClassName}
@@ -624,10 +617,9 @@ export default function LayerPanel({
                       <Button
                         key={mode}
                         type="button"
+                        variant={selectedLayer.align === mode ? 'primary' : 'ghost'}
                         onClick={() => onLayerUpdate(selectedLayer.id, { align: mode })}
-                        className={`btn ${
-                          selectedLayer.align === mode ? 'btn-primary' : 'btn-ghost'
-                        } text-xs`}
+                        className="text-xs"
                       >
                         {mode}
                       </Button>
@@ -673,10 +665,10 @@ export default function LayerPanel({
           </div>
         )}
 
-        <Button type="button" onClick={onExportSingle} disabled={isExporting} className="">
+        <Button type="button" onClick={onExportSingle} disabled={isExporting}>
           {isExporting ? 'Exporting...' : 'Export Active PNG'}
         </Button>
-        <Button type="button" onClick={onExportAll} disabled={isExporting} variant="primary" className="">
+        <Button type="button" onClick={onExportAll} disabled={isExporting} variant="primary">
           {isExporting ? 'Building ZIP...' : 'Export All (ZIP)'}
         </Button>
         <p className="type-meta">

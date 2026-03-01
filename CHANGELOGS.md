@@ -212,3 +212,9 @@
 - Reorganized the `ScreenshotEditor` top bar into clear task-based action groups: `Edit`, `Project`, `View`, and `Export`.
 - Grouped undo/redo, save/load, focus/theme, and export actions under dedicated sections to reduce command-scanning time for first-time users.
 - Added top-level export controls (`Export PNG`, `Export All`, and conditional `Cancel`) so export flow is discoverable without opening the inspector.
+
+## 0.0.19 - 2026-03-01
+- Replaced click-based screenshot reordering controls (`^` / `v`) in the left panel with drag-and-drop sorting on screenshot cards.
+- Added direct reorder support in app state via `handleReorderScreenshot(sourceId, targetId)` for index-to-index moves.
+- Added drop-target visual highlighting during drag to improve placement confidence in multi-screenshot projects.
+- Verified behavior with a successful production build using `npm run build`.

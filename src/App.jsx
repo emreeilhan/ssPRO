@@ -245,22 +245,6 @@ export default function App() {
     });
   };
 
-  const handleMoveScreenshot = (screenshotId, direction) => {
-    const index = screenshots.findIndex((item) => item.id === screenshotId);
-    if (index < 0) {
-      return;
-    }
-
-    const target = direction === 'up' ? index - 1 : index + 1;
-    if (target < 0 || target >= screenshots.length) {
-      return;
-    }
-
-    commitProjectChange({
-      nextScreenshots: reorderByIndex(screenshots, index, target),
-    });
-  };
-
   const handleReorderScreenshot = (sourceScreenshotId, targetScreenshotId) => {
     const sourceIndex = screenshots.findIndex((item) => item.id === sourceScreenshotId);
     const targetIndex = screenshots.findIndex((item) => item.id === targetScreenshotId);
@@ -818,7 +802,6 @@ export default function App() {
       onAddScreenshot={handleAddScreenshot}
       onDuplicateScreenshot={handleDuplicateScreenshot}
       onDeleteScreenshot={handleDeleteScreenshot}
-      onMoveScreenshot={handleMoveScreenshot}
       onReorderScreenshot={handleReorderScreenshot}
       onCyclePrevScreenshot={() => handleCycleScreenshot('prev')}
       onCycleNextScreenshot={() => handleCycleScreenshot('next')}
