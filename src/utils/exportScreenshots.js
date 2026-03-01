@@ -1,6 +1,7 @@
 import JSZip from 'jszip';
 import Konva from 'konva';
 import { saveAs } from 'file-saver';
+import { buildBackgroundRectConfig } from './backgroundUtils';
 import { getImageSource, getMockupScreenSource } from './imageSources';
 
 const resolveBlendMode = (value) => (value && value !== 'normal' ? value : 'source-over');
@@ -190,15 +191,17 @@ async function renderScreenshotBlob(screenshot, devicePreset) {
   const layer = new Konva.Layer();
   stage.add(layer);
 
-  layer.add(
-    new Konva.Rect({
-      x: 0,
-      y: 0,
+  layer.add(new Konva.Rect({
+    x: 0,
+    y: 0,
+    width: devicePreset.width,
+    height: devicePreset.height,
+    ...buildBackgroundRectConfig({
+      screenshot,
       width: devicePreset.width,
       height: devicePreset.height,
-      fill: screenshot.backgroundColor || '#ffffff',
     }),
-  );
+  }));
 
   for (const item of screenshot.layers) {
     if (item.visible === false) {

@@ -1,12 +1,18 @@
 import { useRef } from 'react';
 import { Layer, Rect, Stage } from 'react-konva';
 import { renderLayerNode } from './canvas/renderLayerNode';
+import { buildBackgroundRectConfig } from '../utils/backgroundUtils';
 
 export default function ScreenshotThumbnail({ screenshot, devicePreset, width = 54 }) {
   const nodeRefs = useRef({});
 
   const previewScale = width / devicePreset.width;
   const height = Math.round(devicePreset.height * previewScale);
+  const backgroundRectProps = buildBackgroundRectConfig({
+    screenshot,
+    width,
+    height,
+  });
 
   const setNodeRef = (layerId, node) => {
     if (node) {
@@ -26,7 +32,7 @@ export default function ScreenshotThumbnail({ screenshot, devicePreset, width = 
             y={0}
             width={width}
             height={height}
-            fill={screenshot.backgroundColor || '#ffffff'}
+            {...backgroundRectProps}
           />
 
           {screenshot.layers.map((layer) =>

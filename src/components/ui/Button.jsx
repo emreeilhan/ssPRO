@@ -17,14 +17,25 @@ export default function Button({
   type = 'button',
   variant = 'ghost',
   size = 'md',
+  disabled = false,
+  loading = false,
+  loadingLabel = null,
   className = '',
+  children,
   ...props
 }) {
+  const isButtonElement = Component === 'button';
+
   return (
     <Component
-      type={Component === 'button' ? type : undefined}
-      className={cn(variantClassName[variant] || variantClassName.ghost, sizeClassName[size] || '', className)}
       {...props}
-    />
+      type={isButtonElement ? type : undefined}
+      disabled={isButtonElement ? disabled || loading : disabled}
+      aria-busy={loading ? 'true' : undefined}
+      className={cn(variantClassName[variant] || variantClassName.ghost, sizeClassName[size] || '', className)}
+    >
+      {loading && <span className="btn-spinner" aria-hidden="true" />}
+      <span>{loading ? loadingLabel || children : children}</span>
+    </Component>
   );
 }

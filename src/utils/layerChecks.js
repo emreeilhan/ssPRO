@@ -1,3 +1,5 @@
+import { getBackgroundContrastColor } from './backgroundUtils';
+
 export function estimateTextHeight(layer) {
   const text = layer.text || '';
   const fontSize = layer.fontSize || 64;
@@ -121,7 +123,7 @@ export function getLayerWarnings(screenshot, devicePreset) {
   const SAFE_AREA_MARGIN_X = Math.round(devicePreset.width * 0.05);
   const SAFE_AREA_MARGIN_Y = Math.round(devicePreset.height * 0.05);
   const MIN_FONT_SIZE = 42;
-  const backgroundColor = normalizeHexColor(screenshot.backgroundColor || '#ffffff', '#ffffff');
+  const backgroundColor = normalizeHexColor(getBackgroundContrastColor(screenshot), '#ffffff');
   const warnings = [];
 
   screenshot.layers.forEach((layer) => {

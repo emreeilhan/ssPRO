@@ -3,6 +3,7 @@ import { Layer, Line, Rect, Stage, Transformer } from 'react-konva';
 import { renderLayerNode } from './canvas/renderLayerNode';
 import { commitTransformForLayer } from './canvas/stageTransform';
 import Button from './ui/Button';
+import { buildBackgroundRectConfig } from '../utils/backgroundUtils';
 
 export default function CanvasStage({
   screenshot,
@@ -84,6 +85,11 @@ export default function CanvasStage({
   const safeHeight = Math.round(previewHeight - safeMarginY * 2);
   const centerX = Math.round(previewWidth / 2);
   const centerY = Math.round(previewHeight / 2);
+  const backgroundRectProps = buildBackgroundRectConfig({
+    screenshot,
+    width: previewWidth,
+    height: previewHeight,
+  });
 
   useEffect(() => {
     const transformer = transformerRef.current;
@@ -249,7 +255,7 @@ export default function CanvasStage({
               y={0}
               width={previewWidth}
               height={previewHeight}
-              fill={screenshot.backgroundColor || '#ffffff'}
+              {...backgroundRectProps}
             />
 
             {screenshot.layers.map((layer) =>

@@ -1,8 +1,12 @@
 import { MIN_SCREENSHOTS } from '../constants';
+import { DEFAULT_BACKGROUND } from './backgroundUtils';
 
 export const buildEmptyScreenshot = (id) => ({
   id,
-  backgroundColor: '#ffffff',
+  backgroundType: DEFAULT_BACKGROUND.type,
+  backgroundColor: DEFAULT_BACKGROUND.color,
+  backgroundColor2: DEFAULT_BACKGROUND.color2,
+  backgroundAngle: DEFAULT_BACKGROUND.angle,
   layers: [],
 });
 

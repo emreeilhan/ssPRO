@@ -367,15 +367,6 @@ export default function LayerPanel({
                   />
                 </Field>
 
-                <Field label="Secondary Color">
-                  <input
-                    type="color"
-                    value={selectedLayer.color2 || '#d6e5ff'}
-                    onChange={(event) => onLayerUpdate(selectedLayer.id, { color2: event.target.value })}
-                    className="hairline h-9 w-full rounded-lg"
-                  />
-                </Field>
-
                 <Field label={`Blur (${Math.round(selectedLayer.blur || 28)}px)`}>
                   <input
                     type="range"
@@ -387,38 +378,53 @@ export default function LayerPanel({
                   />
                 </Field>
 
-                {selectedLayer.shapeKind === 'ring' && (
-                  <Field label={`Stroke (${Math.round(selectedLayer.strokeWidth || 20)}px)`}>
+                {isTypeAdvancedOpen && (
+                  <Field label="Secondary Color">
                     <input
-                      type="range"
-                      min="2"
-                      max="120"
-                      step="1"
-                      value={selectedLayer.strokeWidth || 20}
-                      onChange={(event) =>
-                        onLayerUpdate(selectedLayer.id, {
-                          strokeWidth: Number(event.target.value),
-                        })
-                      }
+                      type="color"
+                      value={selectedLayer.color2 || '#d6e5ff'}
+                      onChange={(event) => onLayerUpdate(selectedLayer.id, { color2: event.target.value })}
+                      className="hairline h-9 w-full rounded-lg"
                     />
                   </Field>
                 )}
 
-                {(selectedLayer.shapeKind === 'pill' || selectedLayer.shapeKind === 'glow') && (
-                  <Field label={`Corner Radius (${Math.round(selectedLayer.cornerRadius || 24)}px)`}>
-                    <input
-                      type="range"
-                      min="0"
-                      max="240"
-                      step="1"
-                      value={selectedLayer.cornerRadius || 24}
-                      onChange={(event) =>
-                        onLayerUpdate(selectedLayer.id, {
-                          cornerRadius: Number(event.target.value),
-                        })
-                      }
-                    />
-                  </Field>
+                {isTypeAdvancedOpen && (
+                  <>
+                    {selectedLayer.shapeKind === 'ring' && (
+                      <Field label={`Stroke (${Math.round(selectedLayer.strokeWidth || 20)}px)`}>
+                        <input
+                          type="range"
+                          min="2"
+                          max="120"
+                          step="1"
+                          value={selectedLayer.strokeWidth || 20}
+                          onChange={(event) =>
+                            onLayerUpdate(selectedLayer.id, {
+                              strokeWidth: Number(event.target.value),
+                            })
+                          }
+                        />
+                      </Field>
+                    )}
+
+                    {(selectedLayer.shapeKind === 'pill' || selectedLayer.shapeKind === 'glow') && (
+                      <Field label={`Corner Radius (${Math.round(selectedLayer.cornerRadius || 24)}px)`}>
+                        <input
+                          type="range"
+                          min="0"
+                          max="240"
+                          step="1"
+                          value={selectedLayer.cornerRadius || 24}
+                          onChange={(event) =>
+                            onLayerUpdate(selectedLayer.id, {
+                              cornerRadius: Number(event.target.value),
+                            })
+                          }
+                        />
+                      </Field>
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -464,50 +470,6 @@ export default function LayerPanel({
                   </Field>
                 </div>
 
-                <Field label="Frame Color">
-                  <input
-                    type="color"
-                    value={selectedLayer.frameColor || '#0f172a'}
-                    onChange={(event) => onLayerUpdate(selectedLayer.id, { frameColor: event.target.value })}
-                    className="hairline h-9 w-full rounded-lg"
-                  />
-                </Field>
-
-                <Field label="Accent Color">
-                  <input
-                    type="color"
-                    value={selectedLayer.accentColor || '#334155'}
-                    onChange={(event) => onLayerUpdate(selectedLayer.id, { accentColor: event.target.value })}
-                    className="hairline h-9 w-full rounded-lg"
-                  />
-                </Field>
-
-                <Field label={`Bezel (${Math.round(selectedLayer.bezel || 20)}px)`}>
-                  <input
-                    type="range"
-                    min="6"
-                    max="64"
-                    step="1"
-                    value={selectedLayer.bezel || 20}
-                    onChange={(event) => onLayerUpdate(selectedLayer.id, { bezel: Number(event.target.value) })}
-                  />
-                </Field>
-
-                <Field label={`Corner Radius (${Math.round(selectedLayer.cornerRadius || 80)}px)`}>
-                  <input
-                    type="range"
-                    min="8"
-                    max="260"
-                    step="1"
-                    value={selectedLayer.cornerRadius || 80}
-                    onChange={(event) =>
-                      onLayerUpdate(selectedLayer.id, {
-                        cornerRadius: Number(event.target.value),
-                      })
-                    }
-                  />
-                </Field>
-
                 <Button
                   type="button"
                   onClick={() => mockupUploadRef.current?.click()}
@@ -527,6 +489,54 @@ export default function LayerPanel({
                     event.target.value = '';
                   }}
                 />
+
+                {isTypeAdvancedOpen && (
+                  <>
+                    <Field label="Frame Color">
+                      <input
+                        type="color"
+                        value={selectedLayer.frameColor || '#0f172a'}
+                        onChange={(event) => onLayerUpdate(selectedLayer.id, { frameColor: event.target.value })}
+                        className="hairline h-9 w-full rounded-lg"
+                      />
+                    </Field>
+
+                    <Field label="Accent Color">
+                      <input
+                        type="color"
+                        value={selectedLayer.accentColor || '#334155'}
+                        onChange={(event) => onLayerUpdate(selectedLayer.id, { accentColor: event.target.value })}
+                        className="hairline h-9 w-full rounded-lg"
+                      />
+                    </Field>
+
+                    <Field label={`Bezel (${Math.round(selectedLayer.bezel || 20)}px)`}>
+                      <input
+                        type="range"
+                        min="6"
+                        max="64"
+                        step="1"
+                        value={selectedLayer.bezel || 20}
+                        onChange={(event) => onLayerUpdate(selectedLayer.id, { bezel: Number(event.target.value) })}
+                      />
+                    </Field>
+
+                    <Field label={`Corner Radius (${Math.round(selectedLayer.cornerRadius || 80)}px)`}>
+                      <input
+                        type="range"
+                        min="8"
+                        max="260"
+                        step="1"
+                        value={selectedLayer.cornerRadius || 80}
+                        onChange={(event) =>
+                          onLayerUpdate(selectedLayer.id, {
+                            cornerRadius: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </Field>
+                  </>
+                )}
               </>
             )}
 
@@ -583,58 +593,72 @@ export default function LayerPanel({
                   />
                 </Field>
 
-                <Field label="Font Family">
-                  <Select
-                    value={selectedLayer.fontFamily || 'IBM Plex Sans'}
-                    onChange={(event) => onLayerUpdate(selectedLayer.id, { fontFamily: event.target.value })}
-                    className={inputClassName}
-                  >
-                    {TEXT_FONT_OPTIONS.map((fontName) => (
-                      <option key={fontName} value={fontName}>
-                        {fontName}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-
-                <Field label="Text Width">
-                  <input
-                    type="number"
-                    value={Math.round(selectedLayer.width || 0)}
-                    onChange={(event) =>
-                      onLayerUpdate(selectedLayer.id, {
-                        width: Math.max(80, Number(event.target.value) || 80),
-                      })
-                    }
-                    className={inputClassName}
-                  />
-                </Field>
-
-                <Field label="Text Color">
-                  <input
-                    type="color"
-                    value={selectedLayer.color || '#101010'}
-                    onChange={(event) => onLayerUpdate(selectedLayer.id, { color: event.target.value })}
-                    className="hairline h-9 w-full rounded-lg"
-                  />
-                </Field>
-
-                <Field label="Alignment">
-                  <div className="grid grid-cols-3 gap-1">
-                    {alignmentModes.map((mode) => (
-                      <Button
-                        key={mode}
-                        type="button"
-                        variant={selectedLayer.align === mode ? 'primary' : 'ghost'}
-                        onClick={() => onLayerUpdate(selectedLayer.id, { align: mode })}
-                        className="text-xs"
+                {isTypeAdvancedOpen && (
+                  <>
+                    <Field label="Font Family">
+                      <Select
+                        value={selectedLayer.fontFamily || 'IBM Plex Sans'}
+                        onChange={(event) => onLayerUpdate(selectedLayer.id, { fontFamily: event.target.value })}
+                        className={inputClassName}
                       >
-                        {mode}
-                      </Button>
-                    ))}
-                  </div>
-                </Field>
+                        {TEXT_FONT_OPTIONS.map((fontName) => (
+                          <option key={fontName} value={fontName}>
+                            {fontName}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+
+                    <Field label="Text Width">
+                      <input
+                        type="number"
+                        value={Math.round(selectedLayer.width || 0)}
+                        onChange={(event) =>
+                          onLayerUpdate(selectedLayer.id, {
+                            width: Math.max(80, Number(event.target.value) || 80),
+                          })
+                        }
+                        className={inputClassName}
+                      />
+                    </Field>
+
+                    <Field label="Text Color">
+                      <input
+                        type="color"
+                        value={selectedLayer.color || '#101010'}
+                        onChange={(event) => onLayerUpdate(selectedLayer.id, { color: event.target.value })}
+                        className="hairline h-9 w-full rounded-lg"
+                      />
+                    </Field>
+
+                    <Field label="Alignment">
+                      <div className="grid grid-cols-3 gap-1">
+                        {alignmentModes.map((mode) => (
+                          <Button
+                            key={mode}
+                            type="button"
+                            variant={selectedLayer.align === mode ? 'primary' : 'ghost'}
+                            onClick={() => onLayerUpdate(selectedLayer.id, { align: mode })}
+                            className="text-xs"
+                          >
+                            {mode}
+                          </Button>
+                        ))}
+                      </div>
+                    </Field>
+                  </>
+                )}
               </>
+            )}
+            {hasTypeAdvanced && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setIsTypeAdvancedOpen((prev) => !prev)}
+                className="justify-center"
+              >
+                {isTypeAdvancedOpen ? 'Hide Advanced Controls' : 'Show Advanced Controls'}
+              </Button>
             )}
           </AccordionSection>
         </div>

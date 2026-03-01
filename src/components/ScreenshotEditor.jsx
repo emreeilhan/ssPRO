@@ -5,6 +5,8 @@ import ScreenshotThumbnail from './ScreenshotThumbnail';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { Select } from './ui/Input';
+import { BACKGROUND_TYPES } from '../constants';
+import { resolveBackgroundConfig } from '../utils/backgroundUtils';
 
 function formatScreenshotNumber(index) {
   return String(index + 1).padStart(2, '0');
@@ -12,8 +14,8 @@ function formatScreenshotNumber(index) {
 
 function TopbarGroup({ label, children }) {
   return (
-    <div className="hairline flex flex-wrap items-center gap-2 rounded-lg bg-white/70 px-2 py-1 dark:bg-zinc-900/40">
-      <span className="type-meta whitespace-nowrap uppercase">{label}</span>
+    <div className="topbar-group">
+      <span className="topbar-group__label">{label}</span>
       <div className="flex flex-wrap items-center gap-1">{children}</div>
     </div>
   );
@@ -111,6 +113,11 @@ export default function ScreenshotEditor({
   onSelectScreenshot,
   onSetSelectedLayer,
   onBackgroundChange,
+  onBackgroundSecondaryChange,
+  onBackgroundTypeChange,
+  onBackgroundAngleChange,
+  onApplyBackgroundPreset,
+  backgroundPresets,
   onAddScreenshot,
   onDuplicateScreenshot,
   onDeleteScreenshot,
@@ -159,6 +166,7 @@ export default function ScreenshotEditor({
     return null;
   }
 
+  const background = resolveBackgroundConfig(activeScreenshot);
   const selectedTextLength = selectedLayer?.type === 'text' ? selectedLayer.text.length : 0;
   const compareOptions = useMemo(
     () => screenshots.filter((shot) => shot.id !== activeScreenshotId),
@@ -265,60 +273,79 @@ export default function ScreenshotEditor({
 
   return (
     <div className="app-shell">
-      <Card as="header" className="topbar mb-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-        <div>
+      <Card as="header" className="topbar topbar-modern mb-4">
+        <div className="topbar-modern__identity">
+          <span className="topbar-eyebrow">Creative Workflow</span>
           <h1 className="type-heading">App Store Screenshot Engine</h1>
           <p className="type-meta mt-1">
             Professional screenshot workflow for {devicePreset.label} publishing.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 md:justify-end">
+        <div className="topbar-modern__controls">
           <TopbarGroup label="Edit">
-            <Button variant="ghost" size="sm" onClick={onUndo} disabled={!canUndo}>
+            <Button variant="ghost" size="sm" className="topbar-btn" onClick={onUndo} disabled={!canUndo}>
               Undo
             </Button>
-            <Button variant="ghost" size="sm" onClick={onRedo} disabled={!canRedo}>
+            <Button variant="ghost" size="sm" className="topbar-btn" onClick={onRedo} disabled={!canRedo}>
               Redo
             </Button>
           </TopbarGroup>
 
           <TopbarGroup label="Project">
-            <Button variant="ghost" size="sm" onClick={onSaveProject}>Save</Button>
-            <Button variant="ghost" size="sm" onClick={openProjectDialog}>Load</Button>
+            <Button variant="ghost" size="sm" className="topbar-btn" onClick={onSaveProject}>Save</Button>
+            <Button variant="ghost" size="sm" className="topbar-btn" onClick={openProjectDialog}>Load</Button>
           </TopbarGroup>
 
           <TopbarGroup label="View">
             <Button variant="ghost"
               size="sm"
               onClick={() => setIsFocusedMode((prev) => !prev)}
-              className={isFocusedMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
+              className={`topbar-btn ${isFocusedMode ? 'topbar-focus-active' : ''}`}
             >
               {isFocusedMode ? 'Exit Focus' : 'Focus Mode'}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onToggleTheme}>
+            <Button variant="ghost" size="sm" className="topbar-btn" onClick={onToggleTheme}>
               {isDarkMode ? 'Light' : 'Dark'}
             </Button>
           </TopbarGroup>
 
           <TopbarGroup label="Export">
-            <Button variant="ghost" size="sm" onClick={onExportSingle} disabled={isExporting}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="topbar-btn"
+              onClick={onExportSingle}
+              disabled={isExporting}
+              loading={isExporting && exportProgress?.mode === 'single'}
+              loadingLabel="Exporting..."
+            >
               Export PNG
             </Button>
-            <Button variant="primary" size="sm" onClick={onExportAll} disabled={isExporting}>
+            <Button
+              variant="primary"
+              size="sm"
+              className="topbar-btn"
+              onClick={onExportAll}
+              disabled={isExporting}
+              loading={isExporting && exportProgress?.mode === 'batch'}
+              loadingLabel="Building ZIP..."
+            >
               Export All
             </Button>
             {isExporting && (
-              <Button variant="danger" size="sm" onClick={onCancelExport}>
+              <Button variant="danger" size="sm" className="topbar-btn" onClick={onCancelExport}>
                 Cancel
               </Button>
             )}
           </TopbarGroup>
 
-          <span className="type-meta">{devicePreset.width} x {devicePreset.height} px</span>
-          <span className="type-meta">
+          <div className="topbar-status-wrap">
+            <span className="topbar-status">{devicePreset.width} x {devicePreset.height} px</span>
+            <span className="topbar-status">
             Screenshot {formatScreenshotNumber(activeScreenshotIndex)} · {activeScreenshot.layers.length} layers
-          </span>
+            </span>
+          </div>
         </div>
       </Card>
 
@@ -389,7 +416,7 @@ export default function ScreenshotEditor({
                           setDragScreenshotId(null);
                           setDropScreenshotId(null);
                         }}
-                        className={`grid grid-cols-[1fr_auto] items-start rounded-xl px-2 py-2 ${
+                        className={`interactive-card grid grid-cols-[1fr_auto] items-start rounded-xl px-2 py-2 ${
                           isActive
                             ? 'bg-blue-50/70 dark:bg-blue-500/20'
                             : 'bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/40'
@@ -433,15 +460,51 @@ export default function ScreenshotEditor({
 
         <Card as="section" className="p-4">
           <div className="divider mb-4 grid gap-2 pb-4 xl:grid-cols-[auto_auto_auto_auto_auto_1fr] xl:items-center">
-            <label className="type-meta flex items-center gap-2 uppercase text-zinc-600 dark:text-zinc-300">
-              Background
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="type-meta uppercase text-zinc-600 dark:text-zinc-300">Background</span>
+              <Select
+                value={background.type}
+                onChange={(event) => onBackgroundTypeChange(event.target.value)}
+                className="h-8 min-w-[94px] px-2 py-0 text-xs"
+              >
+                {BACKGROUND_TYPES.map((item) => (
+                  <option key={item.id} value={item.id}>{item.label}</option>
+                ))}
+              </Select>
               <input
                 type="color"
-                value={activeScreenshot.backgroundColor}
+                value={background.color}
                 onChange={(event) => onBackgroundChange(event.target.value)}
                 className="hairline h-8 w-10 rounded-md bg-white"
+                title="Primary background color"
               />
-            </label>
+              {background.type !== 'solid' && (
+                <>
+                  <input
+                    type="color"
+                    value={background.color2}
+                    onChange={(event) => onBackgroundSecondaryChange(event.target.value)}
+                    className="hairline h-8 w-10 rounded-md bg-white"
+                    title="Secondary background color"
+                  />
+                  {background.type === 'linear' && (
+                    <label className="type-meta flex items-center gap-2">
+                      Angle
+                      <input
+                        type="range"
+                        min={0}
+                        max={360}
+                        step={5}
+                        value={background.angle}
+                        onChange={(event) => onBackgroundAngleChange(Number(event.target.value))}
+                        className="w-20"
+                      />
+                      <span className="mono text-[11px]">{background.angle}deg</span>
+                    </label>
+                  )}
+                </>
+              )}
+            </div>
 
             <Button variant="ghost" onClick={openFileDialog}>Upload</Button>
             <Button variant="ghost" onClick={onAddTextLayer}>Add Text</Button>
@@ -465,7 +528,7 @@ export default function ScreenshotEditor({
                   More
                 </Button>
                 {isMoreMenuOpen && (
-                  <div className="hairline absolute right-0 top-11 z-30 grid w-52 gap-1 rounded-xl bg-white p-2 shadow-sm dark:bg-zinc-900">
+                  <div className="surface-popover hairline absolute right-0 top-11 z-30 grid w-52 gap-1 rounded-xl bg-white p-2 shadow-sm dark:bg-zinc-900">
                     <Button
                       variant="ghost"
                       onClick={() => {
@@ -581,6 +644,41 @@ export default function ScreenshotEditor({
                 ? `Character count: ${selectedTextLength}`
                 : 'Select a text layer to show character count'}
             </div>
+
+            <div className="xl:col-span-6 flex flex-wrap gap-2">
+              {backgroundPresets.map((preset) => {
+                const isActive =
+                  preset.type === background.type &&
+                  preset.color.toLowerCase() === background.color.toLowerCase() &&
+                  preset.color2.toLowerCase() === background.color2.toLowerCase() &&
+                  Math.round(preset.angle) === Math.round(background.angle);
+
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => onApplyBackgroundPreset(preset)}
+                    className={`hairline inline-flex items-center gap-2 rounded-md px-2 py-1 text-left transition ${
+                      isActive
+                        ? 'border-blue-300 bg-blue-50/70 text-blue-700 dark:border-blue-500/60 dark:bg-blue-500/20 dark:text-blue-200'
+                        : 'bg-white hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800'
+                    }`}
+                    title={`${preset.label} (${preset.type})`}
+                  >
+                    <span
+                      className="h-4 w-4 rounded-sm border border-black/10"
+                      style={{
+                        background:
+                          preset.type === 'solid'
+                            ? preset.color
+                            : `linear-gradient(135deg, ${preset.color}, ${preset.color2})`,
+                      }}
+                    />
+                    <span className="type-meta leading-none text-[11px]">{preset.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {warnings.length > 0 && (
@@ -605,7 +703,7 @@ export default function ScreenshotEditor({
                     key={action.id}
                     variant="ghost"
                     onClick={action.onClick}
-                    className="hairline w-full rounded-lg bg-white px-3 py-3 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-800"
+                    className="interactive-card hairline w-full rounded-lg bg-white px-3 py-3 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-800"
                   >
                     <p className="type-subheading text-zinc-900 dark:text-zinc-100">{action.label}</p>
                     <p className="type-meta mt-1">{action.hint}</p>

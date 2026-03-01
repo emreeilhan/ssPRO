@@ -208,7 +208,7 @@
 - Improved visual scanning by reducing ad-hoc text sizing and uppercase density in favor of semantic text roles, creating a calmer, less tool-like UI rhythm.
 - Verified the update with a successful production build using `npm run build`.
 
-## 0.0.18 - 2026-03-01
+## 0.0.21 - 2026-03-01
 - Reorganized the `ScreenshotEditor` top bar into clear task-based action groups: `Edit`, `Project`, `View`, and `Export`.
 - Grouped undo/redo, save/load, focus/theme, and export actions under dedicated sections to reduce command-scanning time for first-time users.
 - Added top-level export controls (`Export PNG`, `Export All`, and conditional `Cancel`) so export flow is discoverable without opening the inspector.
@@ -223,3 +223,23 @@
 - Completed a design-system consistency pass in `src/components/ScreenshotEditor.jsx` by switching the screenshot delete action to the shared `Button` danger variant (`variant=\"danger\"`).
 - Kept the existing centralized `Button/Input/Card` architecture intact and aligned destructive-action styling with the same semantic token usage.
 - Verified the update with a successful production build using `npm run build`.
+
+## 0.0.20 - 2026-03-01
+- Simplified `LayerPanel` -> `Type Specific` section with progressive disclosure: advanced controls are now hidden by default and revealed via a dedicated toggle.
+- Kept core controls immediately visible for fast edits, while moving secondary controls under `Show Advanced Controls` for `text`, `shape`, and `mockup` layers.
+- Added automatic reset of advanced-panel state when switching selected layer/type, preventing carry-over clutter between editing contexts.
+- Verified behavior with a successful production build using `npm run build`.
+
+## 0.0.18 - 2026-03-01
+- Modernized the main header in `ScreenshotEditor` with a clearer premium layout: identity block, grouped command clusters (`Edit/Project/View/Export`), and compact status pills.
+- Introduced a refreshed header visual system in `src/index.css` with glass-style surface layering, stronger hierarchy, and polished micro-interactions for top-bar controls.
+- Upgraded typography in the app shell to a `Manrope` + `Sora` pairing to improve product-level visual character and readability.
+- Verified changes with a successful production build using `npm run build`.
+
+## 0.0.20 - 2026-03-01
+- Added production-ready background preset catalog in `src/constants.js` with quick options for solid, linear, and radial styles.
+- Introduced full gradient-capable background model (`backgroundType`, `backgroundColor`, `backgroundColor2`, `backgroundAngle`) with backward-compatible defaults in `src/utils/screenshotHelpers.js`.
+- Implemented shared background rendering engine in `src/utils/backgroundUtils.js` and applied it consistently to canvas preview (`CanvasStage`), screenshot thumbnails, and final PNG/ZIP export pipeline.
+- Upgraded `ScreenshotEditor` background controls with type selector (`Solid`, `Linear`, `Radial`), secondary color + angle controls, and one-click preset chips for faster art direction.
+- Updated layer contrast checks to evaluate against computed background contrast color so warnings remain meaningful when gradients are used.
+- Verified end-to-end behavior with a successful production build using `npm run build`.

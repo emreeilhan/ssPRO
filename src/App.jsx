@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { saveAs } from 'file-saver';
 import ScreenshotEditor from './components/ScreenshotEditor';
-import { DEVICE_PRESET, EXPORT_LOCALES, MIN_SCREENSHOTS } from './constants';
+import {
+  BACKGROUND_PRESETS,
+  DEVICE_PRESET,
+  EXPORT_LOCALES,
+  MIN_SCREENSHOTS,
+} from './constants';
 import { useThemePreference } from './hooks/useThemePreference';
 import { exportAllScreenshots, exportSingleScreenshot } from './utils/exportScreenshots';
 import { loadGoogleFontOnDemand } from './utils/fontLoader';
@@ -184,6 +189,28 @@ export default function App() {
 
   const handleBackgroundChange = (color) => {
     updateActiveScreenshot((item) => ({ ...item, backgroundColor: color }));
+  };
+
+  const handleBackgroundSecondaryChange = (color) => {
+    updateActiveScreenshot((item) => ({ ...item, backgroundColor2: color }));
+  };
+
+  const handleBackgroundTypeChange = (type) => {
+    updateActiveScreenshot((item) => ({ ...item, backgroundType: type }));
+  };
+
+  const handleBackgroundAngleChange = (angle) => {
+    updateActiveScreenshot((item) => ({ ...item, backgroundAngle: angle }));
+  };
+
+  const handleBackgroundPresetApply = (preset) => {
+    updateActiveScreenshot((item) => ({
+      ...item,
+      backgroundType: preset.type,
+      backgroundColor: preset.color,
+      backgroundColor2: preset.color2,
+      backgroundAngle: preset.angle,
+    }));
   };
 
   const handleAddScreenshot = () => {
@@ -799,6 +826,11 @@ export default function App() {
       onSelectScreenshot={setActiveScreenshotId}
       onSetSelectedLayer={setSelectedLayerId}
       onBackgroundChange={handleBackgroundChange}
+      onBackgroundSecondaryChange={handleBackgroundSecondaryChange}
+      onBackgroundTypeChange={handleBackgroundTypeChange}
+      onBackgroundAngleChange={handleBackgroundAngleChange}
+      onApplyBackgroundPreset={handleBackgroundPresetApply}
+      backgroundPresets={BACKGROUND_PRESETS}
       onAddScreenshot={handleAddScreenshot}
       onDuplicateScreenshot={handleDuplicateScreenshot}
       onDeleteScreenshot={handleDeleteScreenshot}
