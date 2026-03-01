@@ -357,3 +357,8 @@
 - Made the `Background` control strip denser in `ScreenshotEditor` by tightening section spacing, shrinking select/color controls, and switching key actions (`Upload`, `Add Text`, `Compare`, `Safe Area`, `More`) to `sm` button sizing.
 - Added `topbar-status--error` truncation so long autosave errors no longer expand header height unexpectedly.
 - Verified the update with a successful production build using `npm run build`.
+
+## 0.0.39 - 2026-03-01
+- Fixed inspector panel recoverability bug: after collapse, expand control now remains visible by applying `collapse-rail--visible` to the right panel in collapsed state.
+- Updated right inspector to use the same animated body/rail visibility structure as the left sidebar, preventing “lost panel” state.
+- Verified the fix with a successful production build using `npm run build`.

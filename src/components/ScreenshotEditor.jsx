@@ -905,8 +905,7 @@ export default function ScreenshotEditor({
 
         {!isFocusedMode && (
           <Card as="aside" className="pane-width inspector-shell">
-            {isRightPanelCollapsed ? (
-              <div className="collapse-rail">
+            <div className={`collapse-rail ${isRightPanelCollapsed ? 'collapse-rail--visible' : ''}`}>
                 <Button variant="ghost"
                   className="h-8 w-8 p-0 text-xs"
                   onClick={() => setIsRightPanelCollapsed(false)}
@@ -914,8 +913,9 @@ export default function ScreenshotEditor({
                 >
                   {'<'}
                 </Button>
-              </div>
-            ) : (
+            </div>
+
+            <div className={`sidebar-panel-body ${isRightPanelCollapsed ? 'sidebar-panel-body--hidden' : ''}`}>
               <LayerPanel
                 screenshot={activeScreenshot}
                 selectedLayer={selectedLayer}
@@ -937,7 +937,7 @@ export default function ScreenshotEditor({
                 onCancelExport={onCancelExport}
                 onCollapse={() => setIsRightPanelCollapsed(true)}
               />
-            )}
+            </div>
           </Card>
         )}
         </main>
