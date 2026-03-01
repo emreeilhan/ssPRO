@@ -218,3 +218,8 @@
 - Added direct reorder support in app state via `handleReorderScreenshot(sourceId, targetId)` for index-to-index moves.
 - Added drop-target visual highlighting during drag to improve placement confidence in multi-screenshot projects.
 - Verified behavior with a successful production build using `npm run build`.
+
+## 0.0.17 - 2026-03-01
+- Completed a design-system consistency pass in `src/components/ScreenshotEditor.jsx` by switching the screenshot delete action to the shared `Button` danger variant (`variant=\"danger\"`).
+- Kept the existing centralized `Button/Input/Card` architecture intact and aligned destructive-action styling with the same semantic token usage.
+- Verified the update with a successful production build using `npm run build`.

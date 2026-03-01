@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TEXT_FONT_OPTIONS, TYPOGRAPHY_SCALES } from '../constants';
 import Button from './ui/Button';
 import { Input, Select, Textarea, inputBaseClassName } from './ui/Input';
@@ -80,12 +80,20 @@ export default function LayerPanel({
     appearance: true,
     type: true,
   });
+  const [isTypeAdvancedOpen, setIsTypeAdvancedOpen] = useState(false);
   const exportPercent = Math.max(0, Math.min(100, Math.round(exportProgress?.percent || 0)));
   const isBatchExport = exportProgress?.mode === 'batch';
+  const selectedLayerType = selectedLayer?.type || null;
+  const hasTypeAdvanced =
+    selectedLayerType === 'text' || selectedLayerType === 'shape' || selectedLayerType === 'mockup';
 
   const toggleSection = (key) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  useEffect(() => {
+    setIsTypeAdvancedOpen(false);
+  }, [selectedLayerId, selectedLayerType]);
 
   const inputClassName = inputBaseClassName;
 

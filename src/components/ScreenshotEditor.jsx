@@ -422,7 +422,7 @@ export default function ScreenshotEditor({
                 <div className="grid gap-2">
                   <Button variant="ghost" onClick={onAddScreenshot}>Add Screenshot</Button>
                   <Button variant="ghost" onClick={onDuplicateScreenshot}>Duplicate</Button>
-                  <Button variant="ghost" className="btn-danger" onClick={onDeleteScreenshot}>
+                  <Button variant="danger" onClick={onDeleteScreenshot}>
                     Delete
                   </Button>
                 </div>
