@@ -81,6 +81,7 @@ select {
   align-items: start;
   padding-top: 0;
   min-height: 100vh;
+  transition: grid-template-columns var(--motion-panel) var(--motion-ease);
 }
 
 .app-shell-unified {
@@ -146,12 +147,30 @@ select {
 }
 
 .left-sidebar-shell {
+  position: relative;
   height: 100%;
   border: 0;
   border-right: 1px solid var(--line);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  overflow: hidden;
+}
+
+.sidebar-panel-body {
+  height: 100%;
+  overflow: auto;
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity var(--motion-panel) var(--motion-ease),
+    transform var(--motion-panel) var(--motion-ease);
+}
+
+.sidebar-panel-body--hidden {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
 }
 
 .workspace-layout {
@@ -170,7 +189,6 @@ select {
     position: sticky;
     top: 0;
     max-height: 100vh;
-    overflow: auto;
   }
 
   .workspace-layout {
@@ -593,10 +611,24 @@ select:focus-visible {
 }
 
 .collapse-rail {
+  position: absolute;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding-top: 16px;
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  transition:
+    opacity var(--motion-panel) var(--motion-ease),
+    transform var(--motion-panel) var(--motion-ease);
+}
+
+.collapse-rail--visible {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
 .type-heading {

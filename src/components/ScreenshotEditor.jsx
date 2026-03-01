@@ -354,8 +354,7 @@ export default function ScreenshotEditor({
       <div className="app-shell-modern app-shell-unified" style={{ '--left-pane': leftPaneWidth }}>
       {!isFocusedMode && (
         <Card as="aside" className="pane-width left-sidebar-shell shell-pane shell-pane--left">
-          {isLeftPanelCollapsed ? (
-            <div className="collapse-rail">
+          <div className={`collapse-rail ${isLeftPanelCollapsed ? 'collapse-rail--visible' : ''}`}>
               <Button variant="ghost"
                 className="h-8 w-8 p-0 text-xs"
                 onClick={() => setIsLeftPanelCollapsed(false)}
@@ -363,9 +362,9 @@ export default function ScreenshotEditor({
               >
                 {'>'}
               </Button>
-            </div>
-          ) : (
-            <div className="p-3">
+          </div>
+
+          <div className={`sidebar-panel-body p-3 ${isLeftPanelCollapsed ? 'sidebar-panel-body--hidden' : ''}`}>
               <div className="divider mb-3 flex items-center justify-between pb-3">
                 <div>
                   <h2 className="type-subheading">Screenshots</h2>
@@ -421,7 +420,7 @@ export default function ScreenshotEditor({
                         setDragScreenshotId(null);
                         setDropScreenshotId(null);
                       }}
-                      className={`interactive-card grid grid-cols-[1fr_auto] items-start rounded-xl px-2 py-2 ${
+                      className={`interactive-card items-start rounded-xl px-2 py-2 ${
                         isActive
                           ? 'bg-blue-50/70 dark:bg-blue-500/24'
                           : 'bg-transparent hover:bg-zinc-50 dark:hover:bg-white/5'
@@ -430,21 +429,18 @@ export default function ScreenshotEditor({
                       <button
                         type="button"
                         onClick={() => onSelectScreenshot(shot.id)}
-                        className="grid grid-cols-[74px_1fr] items-center gap-3 text-left"
+                        className="grid grid-cols-[66px_1fr] items-center gap-3 text-left"
                       >
-                        <ScreenshotThumbnail screenshot={shot} devicePreset={devicePreset} width={72} />
+                        <ScreenshotThumbnail screenshot={shot} devicePreset={devicePreset} width={64} />
                         <div>
                           <div className="type-subheading text-zinc-900 dark:text-zinc-50">
                             Screenshot {formatScreenshotNumber(index)}
                           </div>
                           <div className="type-meta">
-                            {shot.layers.length} layers · {shot.layers.some((layer) => layer.type === 'text') ? 'Text' : 'Visual'}
+                            {shot.layers.length} layers · {shot.layers.some((layer) => layer.type === 'text') ? 'Text' : 'Visual'} · Drag to reorder
                           </div>
                         </div>
                       </button>
-                      <div className="type-meta flex items-center px-2">
-                        Drag
-                      </div>
                     </div>
                   );
                 })}
@@ -459,7 +455,6 @@ export default function ScreenshotEditor({
                 </Button>
               </div>
             </div>
-          )}
         </Card>
       )}
 

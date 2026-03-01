@@ -340,3 +340,9 @@
 - Updated desktop sidebar sticky height to `100vh` so panel behavior remains consistent after outer-frame removal.
 - Preserved internal structure/dividers while eliminating the “website inside a website” perimeter effect.
 - Verified the update with a successful production build using `npm run build`.
+
+## 0.0.36 - 2026-03-01
+- Fixed sidebar screenshot-card drag hint clipping by removing the narrow right-side `Drag` column and moving reorder guidance into the card metadata line.
+- Improved left sidebar open/close smoothness by switching to animated content/rail transitions (`sidebar-panel-body` + `collapse-rail`) instead of hard content swapping.
+- Added grid-column transition to `app-shell-modern` so sidebar width changes interpolate smoothly with content reflow.
+- Verified the update with a successful production build using `npm run build`.
