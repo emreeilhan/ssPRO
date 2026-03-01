@@ -150,6 +150,8 @@ export default function ScreenshotEditor({
   onBackgroundAngleChange,
   onApplyBackgroundPreset,
   backgroundPresets,
+  stylePackages,
+  onApplyStylePackage,
   onAddScreenshot,
   onDuplicateScreenshot,
   onDeleteScreenshot,
@@ -198,29 +200,6 @@ export default function ScreenshotEditor({
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
   const [dragScreenshotId, setDragScreenshotId] = useState(null);
   const [dropScreenshotId, setDropScreenshotId] = useState(null);
-
-  if (isBootstrapping) {
-    return <EditorSkeleton label="Preparing workspace..." />;
-  }
-
-  if (!activeScreenshot) {
-    return (
-      <div className="app-shell app-shell-modern">
-        <div className="app-content-shell">
-          <Card className="p-6">
-            <h2 className="type-subheading mb-2">No Screenshots Yet</h2>
-            <p className="type-meta mb-4">
-              Create your first screenshot to start building the App Store set.
-            </p>
-            <Button variant="primary" onClick={onAddScreenshot}>Create Screenshot</Button>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  const background = resolveBackgroundConfig(activeScreenshot);
-  const selectedTextLength = selectedLayer?.type === 'text' ? selectedLayer.text.length : 0;
   const compareOptions = useMemo(
     () => screenshots.filter((shot) => shot.id !== activeScreenshotId),
     [activeScreenshotId, screenshots],
@@ -313,6 +292,29 @@ export default function ScreenshotEditor({
     return () => window.removeEventListener('mousedown', handleClickOutside);
   }, [isMoreMenuOpen]);
 
+  if (isBootstrapping) {
+    return <EditorSkeleton label="Preparing workspace..." />;
+  }
+
+  if (!activeScreenshot) {
+    return (
+      <div className="app-shell app-shell-modern">
+        <div className="app-content-shell">
+          <Card className="p-6">
+            <h2 className="type-subheading mb-2">No Screenshots Yet</h2>
+            <p className="type-meta mb-4">
+              Create your first screenshot to start building the App Store set.
+            </p>
+            <Button variant="primary" onClick={onAddScreenshot}>Create Screenshot</Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const background = resolveBackgroundConfig(activeScreenshot);
+  const selectedTextLength = selectedLayer?.type === 'text' ? selectedLayer.text.length : 0;
+
   const coachingActions = buildCoachingActions({
     screenshot: activeScreenshot,
     onAddTextLayer,
@@ -327,11 +329,11 @@ export default function ScreenshotEditor({
   return (
     <div className="app-shell app-shell-modern" style={{ '--left-pane': leftPaneWidth }}>
       {uiError && (
-        <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-500/30 dark:bg-red-900/20 dark:text-red-200">
+        <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-400/40 dark:bg-red-950/35 dark:text-red-100">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="type-subheading text-red-700 dark:text-red-200">{uiError.title || 'Something went wrong'}</p>
-              <p className="type-meta mt-1 text-red-600 dark:text-red-200/80">{uiError.message}</p>
+              <p className="type-subheading text-red-700 dark:text-red-100">{uiError.title || 'Something went wrong'}</p>
+              <p className="type-meta mt-1 text-red-600 dark:text-red-100/80">{uiError.message}</p>
             </div>
             <Button variant="ghost" size="sm" onClick={onDismissUiError}>Dismiss</Button>
           </div>
@@ -449,8 +451,8 @@ export default function ScreenshotEditor({
         </Card>
       )}
 
-      <div className="app-content-shell">
-        <Card as="header" className="topbar topbar-modern mb-4">
+      <div className="app-content-shell panel workspace-unified">
+        <header className="topbar topbar-modern topbar-modern--embedded">
         <div className="topbar-modern__identity">
           <span className="topbar-eyebrow">Creative Workflow</span>
           <h1 className="type-heading">App Store Screenshot Engine</h1>
@@ -526,14 +528,14 @@ export default function ScreenshotEditor({
             {autosaveError && <span className="topbar-status text-red-600 dark:text-red-300">{autosaveError}</span>}
           </div>
         </div>
-        </Card>
+        </header>
 
         <main
-          className="workspace-layout"
+          className="workspace-layout workspace-layout-unified"
           style={{ '--right-pane': rightPaneWidth }}
         >
 
-        <Card as="section" className="p-4">
+        <section className="workspace-primary p-4">
           <div className="divider mb-4 grid gap-2 pb-4 xl:grid-cols-[auto_auto_auto_auto_auto_1fr] xl:items-center">
             <div className="flex flex-wrap items-center gap-2">
               <span className="type-meta uppercase text-zinc-600 dark:text-zinc-200">Background</span>
@@ -603,7 +605,26 @@ export default function ScreenshotEditor({
                   More
                 </Button>
                 {isMoreMenuOpen && (
-                  <div className="surface-popover hairline absolute right-0 top-11 z-30 grid w-52 gap-1 rounded-xl bg-white p-2 shadow-sm dark:bg-black">
+                  <div className="surface-popover hairline absolute right-0 top-11 z-30 grid w-60 gap-1 rounded-xl bg-white p-2 shadow-sm dark:bg-black">
+                    <div className="type-meta px-2 py-1 uppercase text-zinc-500 dark:text-zinc-400">
+                      Style Packages
+                    </div>
+                    {stylePackages.map((preset) => (
+                      <Button
+                        key={preset.id}
+                        variant="ghost"
+                        onClick={() => {
+                          onApplyStylePackage(preset.id);
+                          setIsMoreMenuOpen(false);
+                        }}
+                        className="justify-start text-left"
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+
+                    <div className="divider my-1" />
+
                     <Button
                       variant="ghost"
                       onClick={() => {
@@ -863,10 +884,10 @@ export default function ScreenshotEditor({
           <div className="divider type-meta mt-4 pt-3">
             Active screenshot: {formatScreenshotNumber(activeScreenshotIndex)}
           </div>
-        </Card>
+        </section>
 
         {!isFocusedMode && (
-          <Card as="aside" className="pane-width">
+          <Card as="aside" className="pane-width inspector-shell">
             {isRightPanelCollapsed ? (
               <div className="collapse-rail">
                 <Button variant="ghost"

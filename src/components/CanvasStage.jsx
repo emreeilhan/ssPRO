@@ -283,10 +283,10 @@ export default function CanvasStage({
       }}
       onDragLeave={() => setIsDragActive(false)}
       onDrop={handleDrop}
-      className={`interactive-card relative rounded-xl p-3 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-900/20' : 'bg-zinc-50/90 dark:bg-zinc-900/40'}`}
+      className={`interactive-card relative rounded-xl p-3 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-500/22' : 'bg-zinc-50/90 dark:bg-black'}`}
     >
       {!readOnly && (onCyclePrevScreenshot || onCycleNextScreenshot) && (
-        <div className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-lg bg-white/90 px-1 py-1 shadow-sm backdrop-blur dark:bg-zinc-900/80">
+        <div className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-lg bg-white/90 px-1 py-1 shadow-sm backdrop-blur dark:bg-black/90">
           <Button
             onClick={() => onCyclePrevScreenshot?.()}
             className="h-7 px-2 py-0 text-[11px]"

@@ -83,6 +83,24 @@ export const BACKGROUND_PRESETS = [
   },
 ];
 
+export const STYLE_PACKAGES = [
+  {
+    id: 'bold-launch',
+    label: 'Bold Launch',
+    hint: 'High contrast launch aesthetic',
+  },
+  {
+    id: 'minimal-clean',
+    label: 'Minimal Clean',
+    hint: 'Calm and premium minimal look',
+  },
+  {
+    id: 'gaming-neon',
+    label: 'Gaming Neon',
+    hint: 'Dark neon style with energetic glow',
+  },
+];
+
 export const TEXT_FONT_OPTIONS = [
   'IBM Plex Sans',
   'Manrope',

@@ -250,7 +250,7 @@
 - Upgraded typography in the app shell to a `Manrope` + `Sora` pairing to improve product-level visual character and readability.
 - Verified changes with a successful production build using `npm run build`.
 
-## 0.0.23 - 2026-03-01
+## 0.0.26 - 2026-03-01
 - Added reusable loading micro-interaction support to `src/components/ui/Button.jsx` with semantic `loading`/`loadingLabel` props, spinner rendering, and `aria-busy` feedback.
 - Expanded interaction feedback in `src/index.css` with stronger `focus-visible` rings, hover/press motion for buttons, and reduced-motion safeguards for accessibility.
 - Introduced animated micro-surface patterns: `interactive-card` (hover lift + focus-within highlight) and `surface-popover` (soft entry animation), then applied them in `ScreenshotEditor`, `LayerPanel`, and `CanvasStage`.
@@ -268,3 +268,35 @@
 - Moved header into the main content column (separate from left sidebar) and adjusted heading alignment for a more centered-leading composition.
 - Updated responsive grid behavior: desktop now uses `left-sidebar + content` shell and `canvas + inspector` workspace columns for clearer visual hierarchy.
 - Verified changes with a successful production build using `npm run build`.
+
+## 0.0.25 - 2026-03-01
+- Added robust UI state handling in `src/App.jsx` for `isBootstrapping`, `isProcessingImages`, `isLoadingProject`, and dismissible `uiError` messages.
+- Replaced blocking alert-based failures with in-app error reporting for image import, single/batch export, project save, and project load.
+- Added empty-state fallback in `src/components/ScreenshotEditor.jsx` for missing active screenshot data, including a direct `Create Screenshot` recovery action.
+- Implemented skeleton loading UI in `ScreenshotEditor` (workspace skeleton, project-load skeleton, image-processing skeleton) to prevent “broken screen” perception during async operations.
+- Added empty-project hint in the screenshot sidebar and synchronized error reset behavior when new operations start.
+- Verified behavior with a successful production build using `npm run build`.
+
+## 0.0.23 - 2026-03-01
+- Added local autosave with debounced persistence (`1.2s`) using project serialization so editing progress is continuously protected.
+- Added startup autosave recovery flow to restore the latest local project snapshot automatically when available.
+- Added top-bar live status label showing relative save time (for example: `Last saved 10s ago`) and autosave error visibility when persistence fails.
+- Verified behavior with a successful production build using `npm run build`.
+
+## 0.0.24 - 2026-03-01
+- Strengthened dark mode foundation in `src/index.css` with pure-black core tokens (`--bg: #000000`, `--panel: #050505`) and updated dark topbar/group/status surfaces for true black visual consistency.
+- Applied component-level dark refinements in `ScreenshotEditor`, `LayerPanel`, `CanvasStage`, and shared `Input` styles by replacing gray translucent dark backgrounds with black-first surfaces and brighter high-contrast text.
+- Improved dark-state clarity for warning/coaching/selection surfaces so emphasis remains visible on OLED-black backgrounds without muddy gray blending.
+
+## 0.0.25 - 2026-03-01
+- Built a unified workspace surface for the content column so header, toolbar/canvas area, and inspector now read as one connected hierarchy instead of isolated cards.
+- Embedded the header into this shared surface (`topbar-modern--embedded`) with an internal divider, reducing visual fragmentation and improving flow from title to actions.
+- Converted the main editor section to a primary in-surface section (`workspace-primary`) and tuned inspector surface styling (`inspector-shell`) to keep consistent depth levels.
+- Reduced inter-section spacing and normalized panel rhythm in the content rail for a clearer parent-child UI structure.
+- Verified updates with a successful production build using `npm run build`.
+
+## 0.0.27 - 2026-03-01
+- Added three one-click style packages (`Bold Launch`, `Minimal Clean`, `Gaming Neon`) and exposed them in the `More` menu under a dedicated `Style Packages` section.
+- Implemented package application logic that updates active screenshot background + layer styling (text/image/shape/mockup) for immediate visual direction.
+- Added starter composition generation for empty screenshots when a style package is applied, so first-time users get an instant, usable design baseline.
+- Verified behavior with a successful production build using `npm run build`.

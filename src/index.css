@@ -86,13 +86,31 @@ select {
   min-width: 0;
 }
 
+.workspace-unified {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.72)),
+    radial-gradient(1300px 320px at 6% -10%, rgba(37, 99, 235, 0.08), transparent 60%);
+  box-shadow: 0 16px 44px -32px rgba(15, 23, 42, 0.5);
+}
+
+:root.dark .workspace-unified {
+  background:
+    linear-gradient(180deg, rgba(12, 14, 20, 0.88), rgba(8, 10, 14, 0.82)),
+    radial-gradient(1200px 320px at 8% -16%, rgba(142, 179, 255, 0.16), transparent 62%);
+  box-shadow: 0 18px 46px -30px rgba(0, 0, 0, 0.92);
+}
+
 .left-sidebar-shell {
   height: 100%;
 }
 
 .workspace-layout {
   display: grid;
-  gap: 16px;
+  gap: 10px;
   grid-template-columns: minmax(0, 1fr);
   transition: grid-template-columns var(--motion-panel) var(--motion-ease);
 }
@@ -198,6 +216,15 @@ select {
     radial-gradient(1100px 180px at 0% -35%, rgba(37, 99, 235, 0.09), transparent 56%),
     linear-gradient(160deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.84));
   box-shadow: 0 14px 38px -28px rgba(15, 23, 42, 0.5);
+}
+
+.topbar-modern--embedded {
+  margin-bottom: 0;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: none;
+  border-bottom: 1px solid var(--line);
+  padding: 14px 12px 16px;
 }
 
 :root.dark .topbar-modern {
@@ -342,6 +369,25 @@ select {
   background: rgba(0, 0, 0, 0.74);
 }
 
+:root.dark .workspace-primary {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.workspace-primary {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.inspector-shell {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+:root.dark .inspector-shell {
+  background: rgba(0, 0, 0, 0.46);
+}
+
 @media (min-width: 1024px) {
   .topbar-modern {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -354,6 +400,10 @@ select {
 
   .topbar-modern__controls {
     justify-content: flex-end;
+  }
+
+  .workspace-layout-unified {
+    align-items: start;
   }
 }
 

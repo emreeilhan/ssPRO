@@ -6,6 +6,7 @@ import {
   DEVICE_PRESET,
   EXPORT_LOCALES,
   MIN_SCREENSHOTS,
+  STYLE_PACKAGES,
 } from './constants';
 import { useThemePreference } from './hooks/useThemePreference';
 import { exportAllScreenshots, exportSingleScreenshot } from './utils/exportScreenshots';
@@ -15,6 +16,7 @@ import { getLayerWarnings } from './utils/layerChecks';
 import { createObjectURL, readImageDimensions } from './utils/imageFileUtils';
 import { buildDecorPreset, buildMockupPreset } from './utils/layerPresets';
 import { hydrateProject, serializeProject } from './utils/projectPersistence';
+import { applyStylePackageToScreenshot } from './utils/stylePackages';
 import {
   buildEmptyScreenshot,
   createInitialScreenshots,
@@ -410,6 +412,17 @@ export default function App() {
       backgroundColor2: preset.color2,
       backgroundAngle: preset.angle,
     }));
+  };
+
+  const handleApplyStylePackage = (packageId) => {
+    updateActiveScreenshot((item) =>
+      applyStylePackageToScreenshot({
+        screenshot: item,
+        packageId,
+        allocateLayerId,
+        devicePreset: DEVICE_PRESET,
+      }),
+    );
   };
 
   const handleAddScreenshot = () => {
@@ -1018,6 +1031,8 @@ export default function App() {
       onBackgroundAngleChange={handleBackgroundAngleChange}
       onApplyBackgroundPreset={handleBackgroundPresetApply}
       backgroundPresets={BACKGROUND_PRESETS}
+      stylePackages={STYLE_PACKAGES}
+      onApplyStylePackage={handleApplyStylePackage}
       onAddScreenshot={handleAddScreenshot}
       onDuplicateScreenshot={handleDuplicateScreenshot}
       onDeleteScreenshot={handleDeleteScreenshot}
