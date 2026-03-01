@@ -300,3 +300,7 @@
 - Implemented package application logic that updates active screenshot background + layer styling (text/image/shape/mockup) for immediate visual direction.
 - Added starter composition generation for empty screenshots when a style package is applied, so first-time users get an instant, usable design baseline.
 - Verified behavior with a successful production build using `npm run build`.
+
+## 0.0.28 - 2026-03-01
+- Fixed a runtime React hook-order violation in `src/components/ScreenshotEditor.jsx` by moving conditional early returns (`isBootstrapping` / missing `activeScreenshot`) after all hooks, preventing blank-screen crashes.
+- Verified the fix with a successful production build using `npm run build`.
