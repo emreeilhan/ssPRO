@@ -346,3 +346,8 @@
 - Improved left sidebar open/close smoothness by switching to animated content/rail transitions (`sidebar-panel-body` + `collapse-rail`) instead of hard content swapping.
 - Added grid-column transition to `app-shell-modern` so sidebar width changes interpolate smoothly with content reflow.
 - Verified the update with a successful production build using `npm run build`.
+
+## 0.0.37 - 2026-03-01
+- Increased canvas visual priority by enlarging preview sizing rules in `CanvasStage` (`width cap 480 -> 620`, `height budget floor 420 -> 560`, and less conservative viewport subtraction).
+- Reduced non-canvas chrome spacing inside `CanvasStage` (container padding, label spacing, helper-text spacing, and nav chip offset) so more vertical space is dedicated to the editable canvas.
+- Verified the update with a successful production build using `npm run build`.

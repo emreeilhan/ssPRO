@@ -75,8 +75,8 @@ export default function CanvasStage({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const widthBasedPreview = Math.min(Math.max(canvasWrapWidth - 20, 240), 480);
-  const maxCanvasHeight = Math.max(420, viewportHeight - 330);
+  const widthBasedPreview = Math.min(Math.max(canvasWrapWidth - 12, 300), 620);
+  const maxCanvasHeight = Math.max(560, viewportHeight - 220);
   const heightBasedPreview = (maxCanvasHeight * devicePreset.width) / devicePreset.height;
   const previewWidth = Math.min(widthBasedPreview, heightBasedPreview);
   const previewScale = previewWidth / devicePreset.width;
@@ -283,10 +283,10 @@ export default function CanvasStage({
       }}
       onDragLeave={() => setIsDragActive(false)}
       onDrop={handleDrop}
-      className={`interactive-card relative rounded-xl p-3 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-500/22' : 'bg-zinc-50/90 dark:bg-black'}`}
+      className={`interactive-card relative rounded-xl p-2 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-500/22' : 'bg-zinc-50/90 dark:bg-black'}`}
     >
       {!readOnly && (onCyclePrevScreenshot || onCycleNextScreenshot) && (
-        <div className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-lg bg-white/90 px-1 py-1 shadow-sm backdrop-blur dark:bg-black/90">
+        <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-lg bg-white/90 px-1 py-1 shadow-sm backdrop-blur dark:bg-black/90">
           <Button
             onClick={() => onCyclePrevScreenshot?.()}
             className="h-7 px-2 py-0 text-[11px]"
@@ -303,7 +303,7 @@ export default function CanvasStage({
       )}
 
       {label && (
-        <div className="type-meta mb-3 uppercase">
+        <div className="type-meta mb-2 uppercase">
           {label}
         </div>
       )}
@@ -436,7 +436,7 @@ export default function CanvasStage({
         </Stage>
       </div>
 
-      <p className="type-meta mt-3">
+      <p className="type-meta mt-2">
         {readOnly
           ? 'Comparison panel is read-only.'
           : 'Drag PNG/JPG files here or use upload button. Resize via transform handles. Horizontal scroll changes screenshot.'}
