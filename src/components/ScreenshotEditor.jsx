@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import CanvasStage from './CanvasStage';
 import LayerPanel from './LayerPanel';
 import ScreenshotThumbnail from './ScreenshotThumbnail';
+import Button from './ui/Button';
+import Card from './ui/Card';
+import { Select } from './ui/Input';
 
 function formatScreenshotNumber(index) {
   return String(index + 1).padStart(2, '0');
@@ -82,14 +85,6 @@ function buildCoachingActions({ screenshot, onAddTextLayer, onAddDecorLayer, onA
   }
 
   return [];
-}
-
-function GhostButton({ children, className = '', ...props }) {
-  return (
-    <button type="button" className={`btn btn-ghost ${className}`.trim()} {...props}>
-      {children}
-    </button>
-  );
 }
 
 export default function ScreenshotEditor({
@@ -259,10 +254,10 @@ export default function ScreenshotEditor({
 
   return (
     <div className="app-shell">
-      <header className="panel topbar mb-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+      <Card as="header" className="topbar mb-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">App Store Screenshot Engine</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="type-heading">App Store Screenshot Engine</h1>
+          <p className="type-meta mt-1">
             Professional screenshot workflow for {devicePreset.label} publishing.
           </p>
         </div>
@@ -276,29 +271,29 @@ export default function ScreenshotEditor({
           </Button>
           <Button variant="ghost" onClick={onSaveProject}>Save</Button>
           <Button variant="ghost" onClick={openProjectDialog}>Load</Button>
-          <GhostButton
+          <Button variant="ghost"
             onClick={() => setIsFocusedMode((prev) => !prev)}
             className={isFocusedMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
           >
             {isFocusedMode ? 'Exit Focus' : 'Focus Mode'}
           </Button>
           <Button variant="ghost" onClick={onToggleTheme}>{isDarkMode ? 'Light' : 'Dark'}</Button>
-          <span className="tag">{devicePreset.width} x {devicePreset.height} px</span>
-          <span className="tag">
+          <span className="type-meta">{devicePreset.width} x {devicePreset.height} px</span>
+          <span className="type-meta">
             Screenshot {formatScreenshotNumber(activeScreenshotIndex)} · {activeScreenshot.layers.length} layers
           </span>
         </div>
-      </header>
+      </Card>
 
       <main
         className="workspace-layout"
         style={{ '--left-pane': leftPaneWidth, '--right-pane': rightPaneWidth }}
       >
         {!isFocusedMode && (
-          <aside className="panel pane-width">
+          <Card as="aside" className="pane-width">
             {isLeftPanelCollapsed ? (
               <div className="collapse-rail">
-                <GhostButton
+                <Button variant="ghost"
                   className="h-8 w-8 p-0 text-xs"
                   onClick={() => setIsLeftPanelCollapsed(false)}
                   aria-label="Expand screenshots panel"
@@ -310,10 +305,10 @@ export default function ScreenshotEditor({
               <div className="p-3">
                 <div className="divider mb-3 flex items-center justify-between pb-3">
                   <div>
-                    <h2 className="text-base font-semibold">Screenshots</h2>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{screenshots.length} variants</p>
+                    <h2 className="type-subheading">Screenshots</h2>
+                    <p className="type-meta">{screenshots.length} variants</p>
                   </div>
-                  <GhostButton
+                  <Button variant="ghost"
                     className="h-8 w-8 p-0 text-xs"
                     onClick={() => setIsLeftPanelCollapsed(true)}
                     aria-label="Collapse screenshots panel"
@@ -342,10 +337,10 @@ export default function ScreenshotEditor({
                         >
                           <ScreenshotThumbnail screenshot={shot} devicePreset={devicePreset} width={72} />
                           <div>
-                            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                            <div className="type-subheading text-zinc-900 dark:text-zinc-100">
                               Screenshot {formatScreenshotNumber(index)}
                             </div>
-                            <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                            <div className="type-meta">
                               {shot.layers.length} layers · {shot.layers.some((layer) => layer.type === 'text') ? 'Text' : 'Visual'}
                             </div>
                           </div>
@@ -373,12 +368,12 @@ export default function ScreenshotEditor({
                 </div>
               </div>
             )}
-          </aside>
+          </Card>
         )}
 
-        <section className="panel p-4">
+        <Card as="section" className="p-4">
           <div className="divider mb-4 grid gap-2 pb-4 xl:grid-cols-[auto_auto_auto_auto_auto_1fr] xl:items-center">
-            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
+            <label className="type-meta flex items-center gap-2 uppercase text-zinc-600 dark:text-zinc-300">
               Background
               <input
                 type="color"
@@ -390,14 +385,14 @@ export default function ScreenshotEditor({
 
             <Button variant="ghost" onClick={openFileDialog}>Upload</Button>
             <Button variant="ghost" onClick={onAddTextLayer}>Add Text</Button>
-            <GhostButton
+            <Button variant="ghost"
               onClick={() => setIsCompareMode((prev) => !prev)}
               className={isCompareMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
             >
               Compare
             </Button>
 
-            <GhostButton
+            <Button variant="ghost"
               onClick={() => setShowSafeArea((prev) => !prev)}
               className={showSafeArea ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
             >
@@ -411,104 +406,104 @@ export default function ScreenshotEditor({
                 </Button>
                 {isMoreMenuOpen && (
                   <div className="hairline absolute right-0 top-11 z-30 grid w-52 gap-1 rounded-xl bg-white p-2 shadow-sm dark:bg-zinc-900">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
                       onClick={() => {
                         onAddDecorLayer('orb');
                         setIsMoreMenuOpen(false);
                       }}
-                      className="btn btn-ghost justify-start text-left"
+                      className="justify-start text-left"
                     >
                       Add Orb
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
                       onClick={() => {
                         onAddDecorLayer('ring');
                         setIsMoreMenuOpen(false);
                       }}
-                      className="btn btn-ghost justify-start text-left"
+                      className="justify-start text-left"
                     >
                       Add Ring
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
                       onClick={() => {
                         onAddDecorLayer('pill');
                         setIsMoreMenuOpen(false);
                       }}
-                      className="btn btn-ghost justify-start text-left"
+                      className="justify-start text-left"
                     >
                       Add Pill
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
                       onClick={() => {
                         onAddDecorLayer('glow');
                         setIsMoreMenuOpen(false);
                       }}
-                      className="btn btn-ghost justify-start text-left"
+                      className="justify-start text-left"
                     >
                       Add Glow
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
                       onClick={() => {
                         onAddMockupLayer('realistic');
                         setIsMoreMenuOpen(false);
                       }}
-                      className="btn btn-ghost justify-start text-left"
+                      className="justify-start text-left"
                     >
                       Mockup Realistic
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
                       onClick={() => {
                         onAddMockupLayer('flat');
                         setIsMoreMenuOpen(false);
                       }}
-                      className="btn btn-ghost justify-start text-left"
+                      className="justify-start text-left"
                     >
                       Mockup Flat
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
                       onClick={() => {
                         onAddMockupLayer('rounded');
                         setIsMoreMenuOpen(false);
                       }}
-                      className="btn btn-ghost justify-start text-left"
+                      className="justify-start text-left"
                     >
                       Mockup Rounded
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant={showCenterGuides ? 'primary' : 'ghost'}
                       onClick={() => {
                         setShowCenterGuides((prev) => !prev);
                       }}
-                      className={`btn ${showCenterGuides ? 'btn-primary' : 'btn-ghost'} justify-start text-left`}
+                      className="justify-start text-left"
                     >
                       Center Guides
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant={showMarginGrid ? 'primary' : 'ghost'}
                       onClick={() => {
                         setShowMarginGrid((prev) => !prev);
                       }}
-                      className={`btn ${showMarginGrid ? 'btn-primary' : 'btn-ghost'} justify-start text-left`}
+                      className="justify-start text-left"
                     >
                       Margin Grid
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
             </div>
 
             {isCompareMode && (
-              <select
+              <Select
                 value={compareScreenshotId || ''}
                 onChange={(event) => setCompareScreenshotId(Number(event.target.value))}
-                className="hairline rounded-lg px-2 py-2 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                className="type-meta py-2 text-zinc-700 dark:text-zinc-200"
               >
                 {compareOptions.map((shot) => {
                   const screenshotOrder = screenshots.findIndex((item) => item.id === shot.id);
@@ -518,10 +513,10 @@ export default function ScreenshotEditor({
                     </option>
                   );
                 })}
-              </select>
+              </Select>
             )}
 
-            <div className="text-right text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="type-meta text-right">
               {selectedLayer?.type === 'text'
                 ? `Character count: ${selectedTextLength}`
                 : 'Select a text layer to show character count'}
@@ -530,8 +525,8 @@ export default function ScreenshotEditor({
 
           {warnings.length > 0 && (
             <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-red-700 dark:bg-red-900/20 dark:text-red-200">
-              <p className="text-xs font-semibold uppercase tracking-wide">Compliance warnings</p>
-              <ul className="mt-1 space-y-1 text-xs">
+              <p className="type-meta uppercase text-zinc-700 dark:text-zinc-200">Compliance warnings</p>
+              <ul className="type-meta mt-1 space-y-1">
                 {warnings.map((warning, index) => (
                   <li key={`${warning.layerId}-${warning.type}-${index}`}>- {warning.message}</li>
                 ))}
@@ -541,20 +536,20 @@ export default function ScreenshotEditor({
 
           {coachingActions.length > 0 && (
             <div className="mb-4 rounded-lg bg-blue-50/60 px-3 py-3 dark:bg-blue-500/15">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
+              <p className="type-meta uppercase text-blue-700 dark:text-blue-200">
                 Quick Start Guidance
               </p>
               <div className="mt-2 grid gap-2 md:grid-cols-2">
                 {coachingActions.map((action) => (
-                  <button
+                  <Button
                     key={action.id}
-                    type="button"
+                    variant="ghost"
                     onClick={action.onClick}
-                    className="hairline rounded-lg bg-white px-3 py-3 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-800"
+                    className="hairline w-full rounded-lg bg-white px-3 py-3 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-800"
                   >
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{action.label}</p>
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{action.hint}</p>
-                  </button>
+                    <p className="type-subheading text-zinc-900 dark:text-zinc-100">{action.label}</p>
+                    <p className="type-meta mt-1">{action.hint}</p>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -624,16 +619,16 @@ export default function ScreenshotEditor({
             className="hidden"
           />
 
-          <div className="divider mt-4 pt-3 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="divider type-meta mt-4 pt-3">
             Active screenshot: {formatScreenshotNumber(activeScreenshotIndex)}
           </div>
-        </section>
+        </Card>
 
         {!isFocusedMode && (
-          <aside className="panel pane-width">
+          <Card as="aside" className="pane-width">
             {isRightPanelCollapsed ? (
               <div className="collapse-rail">
-                <GhostButton
+                <Button variant="ghost"
                   className="h-8 w-8 p-0 text-xs"
                   onClick={() => setIsRightPanelCollapsed(false)}
                   aria-label="Expand inspector panel"
@@ -664,7 +659,7 @@ export default function ScreenshotEditor({
                 onCollapse={() => setIsRightPanelCollapsed(true)}
               />
             )}
-          </aside>
+          </Card>
         )}
       </main>
     </div>

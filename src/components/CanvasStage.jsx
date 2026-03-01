@@ -232,7 +232,7 @@ export default function CanvasStage({
       )}
 
       {label && (
-        <div className="mb-3 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <div className="type-meta mb-3 uppercase">
           {label}
         </div>
       )}
@@ -351,7 +351,7 @@ export default function CanvasStage({
         </Stage>
       </div>
 
-      <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="type-meta mt-3">
         {readOnly
           ? 'Comparison panel is read-only.'
           : 'Drag PNG/JPG files here or use upload button. Resize via transform handles. Horizontal scroll changes screenshot.'}

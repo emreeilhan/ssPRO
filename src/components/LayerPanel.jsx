@@ -25,7 +25,7 @@ const layerTypeMeta = {
 function Field({ label, children }) {
   return (
     <label className="grid gap-1.5 text-xs">
-      <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <span className="type-meta uppercase text-zinc-500 dark:text-zinc-400">
         {label}
       </span>
       {children}
@@ -36,14 +36,14 @@ function Field({ label, children }) {
 function AccordionSection({ title, isOpen, onToggle, children }) {
   return (
     <section className="rounded-lg bg-zinc-50/70 dark:bg-zinc-900/40">
-      <button
+      <Button
         type="button"
         onClick={onToggle}
         className="flex w-full items-center justify-between px-3 py-2.5 text-left"
       >
-        <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{title}</span>
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">{isOpen ? '-' : '+'}</span>
-      </button>
+        <span className="type-subheading text-zinc-800 dark:text-zinc-200">{title}</span>
+        <span className="type-meta">{isOpen ? '-' : '+'}</span>
+      </Button>
       {isOpen && <div className="grid gap-3 px-3 pb-3">{children}</div>}
     </section>
   );
@@ -95,27 +95,27 @@ export default function LayerPanel({
     <div className="h-full p-3">
       <div className="divider mb-3 flex items-start justify-between pb-3">
         <div>
-          <h2 className="text-base font-semibold">Inspector</h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{screenshot.layers.length} layers</p>
+          <h2 className="type-subheading">Inspector</h2>
+          <p className="type-meta">{screenshot.layers.length} layers</p>
         </div>
-        <button
+        <Button
           type="button"
           onClick={onCollapse}
           className="btn btn-ghost h-8 w-8 p-0 text-xs"
           aria-label="Collapse inspector panel"
         >
           {'>'}
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-1.5 rounded-lg bg-zinc-50/60 p-2 dark:bg-zinc-900/40">
-        <div className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <div className="type-meta px-1 uppercase">
           Layer stack
         </div>
         <div className="space-y-1">
-          <div className="rounded-md px-2 py-1.5 text-xs text-zinc-500 dark:text-zinc-400">Background (locked)</div>
+          <div className="type-meta rounded-md px-2 py-1.5">Background (locked)</div>
           {orderedLayers.length === 0 && (
-            <div className="rounded-md px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">No layers yet</div>
+            <div className="type-meta rounded-md px-2 py-2">No layers yet</div>
           )}
           {orderedLayers.map((layer) => {
             const isSelected = selectedLayerId === layer.id;
@@ -131,50 +131,50 @@ export default function LayerPanel({
                   isSelected ? 'bg-blue-50/80 dark:bg-blue-500/20' : 'bg-white/75 dark:bg-zinc-900/60'
                 }`}
               >
-                <button type="button" onClick={() => onSelectLayer(layer.id)} className="text-left">
+                <Button type="button" onClick={() => onSelectLayer(layer.id)} className="text-left">
                   <div className="flex items-center gap-2">
                     <span
                       className={`inline-flex min-w-8 items-center justify-center rounded px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${meta.tone}`}
                     >
                       {meta.icon}
                     </span>
-                    <span className="text-sm leading-4 text-zinc-900 dark:text-zinc-100">{layer.name}</span>
+                    <span className="type-subheading leading-4 text-zinc-900 dark:text-zinc-100">{layer.name}</span>
                   </div>
-                  <div className="mt-1 flex items-center gap-1 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <div className="type-meta mt-1 flex items-center gap-1 uppercase">
                     <span>{layer.type}</span>
                     {layer.locked && <span className="rounded bg-zinc-200 px-1 py-0.5 dark:bg-zinc-700">Locked</span>}
                     {layer.visible === false && <span className="rounded bg-red-100 px-1 py-0.5 text-red-700 dark:bg-red-900/40 dark:text-red-200">Hidden</span>}
                   </div>
-                </button>
+                </Button>
                 <div className="flex gap-1">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => onLayerVisibility(layer.id)}
                     className="btn btn-ghost h-7 px-2 py-0 text-[11px]"
                   >
                     {layer.visible === false ? 'Show' : 'Hide'}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => onLayerLockToggle(layer.id)}
                     className="btn btn-ghost h-7 px-2 py-0 text-[11px]"
                   >
                     {layer.locked ? 'Unlock' : 'Lock'}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => onMoveLayer(layer.id, 'up')}
                     className="btn btn-ghost h-7 min-w-7 p-0 text-[11px]"
                   >
                     ^
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => onMoveLayer(layer.id, 'down')}
                     className="btn btn-ghost h-7 min-w-7 p-0 text-[11px]"
                   >
                     v
-                  </button>
+                  </Button>
                 </div>
               </div>
             );
@@ -186,24 +186,24 @@ export default function LayerPanel({
         <div className="mt-3 grid gap-3">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{selectedLayer.name}</div>
-              <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{selectedLayer.type}</div>
+              <div className="type-subheading text-zinc-900 dark:text-zinc-100">{selectedLayer.name}</div>
+              <div className="type-meta uppercase">{selectedLayer.type}</div>
             </div>
             <div className="flex gap-1">
-              <button type="button" onClick={() => onDuplicateLayer(selectedLayer.id)} className="btn btn-ghost text-xs">
+              <Button type="button" onClick={() => onDuplicateLayer(selectedLayer.id)} className="btn btn-ghost text-xs">
                 Duplicate
-              </button>
-              <button type="button" onClick={() => onLayerLockToggle(selectedLayer.id)} className="btn btn-ghost text-xs">
+              </Button>
+              <Button type="button" onClick={() => onLayerLockToggle(selectedLayer.id)} className="btn btn-ghost text-xs">
                 {selectedLayer.locked ? 'Unlock' : 'Lock'}
-              </button>
-              <button type="button" onClick={() => onLayerDelete(selectedLayer.id)} className="btn btn-ghost btn-danger text-xs">
+              </Button>
+              <Button type="button" onClick={() => onLayerDelete(selectedLayer.id)} className="btn btn-ghost btn-danger text-xs">
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
 
           {selectedWarnings.length > 0 && (
-            <div className="rounded-lg bg-red-50 px-2 py-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-200">
+            <div className="type-meta rounded-lg bg-red-50 px-2 py-2 text-red-700 dark:bg-red-900/20 dark:text-red-200">
               {selectedWarnings.map((warning, index) => (
                 <p key={`${warning.type}-${index}`}>- {warning.message}</p>
               ))}
@@ -245,15 +245,15 @@ export default function LayerPanel({
             </div>
 
             <div className="grid grid-cols-3 gap-1">
-              <button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center-x')} className="btn btn-ghost text-[11px]">
+              <Button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center-x')} className="btn btn-ghost text-[11px]">
                 Center X
-              </button>
-              <button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center-y')} className="btn btn-ghost text-[11px]">
+              </Button>
+              <Button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center-y')} className="btn btn-ghost text-[11px]">
                 Center Y
-              </button>
-              <button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center')} className="btn btn-ghost text-[11px]">
+              </Button>
+              <Button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center')} className="btn btn-ghost text-[11px]">
                 Center
-              </button>
+              </Button>
             </div>
           </AccordionSection>
 
@@ -324,7 +324,7 @@ export default function LayerPanel({
 
             {selectedLayer.type === 'shape' && (
               <>
-                <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <div className="type-meta uppercase">
                   Style: {selectedLayer.shapeKind || 'orb'}
                 </div>
 
@@ -505,13 +505,13 @@ export default function LayerPanel({
                   />
                 </Field>
 
-                <button
+                <Button
                   type="button"
                   onClick={() => mockupUploadRef.current?.click()}
                   className="btn btn-ghost"
                 >
                   Upload Screen Image
-                </button>
+                </Button>
                 <input
                   ref={mockupUploadRef}
                   type="file"
@@ -539,7 +539,7 @@ export default function LayerPanel({
                   />
                 </Field>
 
-                <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                <div className="type-meta">
                   Characters: {(selectedLayer.text || '').length}
                 </div>
 
@@ -551,7 +551,7 @@ export default function LayerPanel({
                         Math.abs((selectedLayer.lineHeight || 1.1) - preset.lineHeight) < 0.01 &&
                         Math.round(selectedLayer.width || 0) === preset.width;
                       return (
-                        <button
+                        <Button
                           key={preset.id}
                           type="button"
                           onClick={() =>
@@ -568,7 +568,7 @@ export default function LayerPanel({
                           } text-xs`}
                         >
                           {preset.label}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -623,7 +623,7 @@ export default function LayerPanel({
                 <Field label="Alignment">
                   <div className="grid grid-cols-3 gap-1">
                     {alignmentModes.map((mode) => (
-                      <button
+                      <Button
                         key={mode}
                         type="button"
                         onClick={() => onLayerUpdate(selectedLayer.id, { align: mode })}
@@ -632,7 +632,7 @@ export default function LayerPanel({
                         } text-xs`}
                       >
                         {mode}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </Field>
@@ -641,21 +641,21 @@ export default function LayerPanel({
           </AccordionSection>
         </div>
       ) : (
-        <div className="mt-3 rounded-lg bg-zinc-50/70 px-3 py-3 text-xs text-zinc-500 dark:bg-zinc-900/40 dark:text-zinc-400">
+        <div className="type-meta mt-3 rounded-lg bg-zinc-50/70 px-3 py-3 dark:bg-zinc-900/40">
           Select a layer to edit properties.
         </div>
       )}
 
       <div className="mt-3 grid gap-2">
-        <div className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Export</div>
+        <div className="type-meta uppercase">Export</div>
 
         {isExporting && exportProgress && (
           <div className="grid gap-1 rounded-lg bg-zinc-50 px-2 py-2 dark:bg-zinc-900/40">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
+              <p className="type-meta uppercase text-zinc-600 dark:text-zinc-300">
                 {exportProgress.message || 'Exporting...'}
               </p>
-              <span className="text-[11px] text-zinc-500 dark:text-zinc-400">{exportPercent}%</span>
+              <span className="type-meta">{exportPercent}%</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded bg-zinc-200 dark:bg-zinc-700">
               <div
@@ -664,24 +664,24 @@ export default function LayerPanel({
               />
             </div>
             {isBatchExport && (
-              <button
+              <Button
                 type="button"
                 onClick={onCancelExport}
                 className="btn btn-ghost btn-danger mt-1"
               >
                 Cancel Export
-              </button>
+              </Button>
             )}
           </div>
         )}
 
-        <button type="button" onClick={onExportSingle} disabled={isExporting} className="btn btn-ghost">
+        <Button type="button" onClick={onExportSingle} disabled={isExporting} className="btn btn-ghost">
           {isExporting ? 'Exporting...' : 'Export Active PNG'}
-        </button>
-        <button type="button" onClick={onExportAll} disabled={isExporting} className="btn btn-primary">
+        </Button>
+        <Button type="button" onClick={onExportAll} disabled={isExporting} className="btn btn-primary">
           {isExporting ? 'Building ZIP...' : 'Export All (ZIP)'}
-        </button>
-        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+        </Button>
+        <p className="type-meta">
           Always exported at 1290x2796 PNG, preview scaling ignored.
         </p>
       </div>

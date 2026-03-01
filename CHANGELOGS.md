@@ -201,3 +201,9 @@
 - Upgraded screenshot cards in the left panel to a more content-first layout by enlarging previews and reducing metadata emphasis, improving quick scan quality across variants.
 - Added a global micro-interaction standard in `src/index.css` with shared motion tokens (`--motion-fast`, `--motion-base`, `--motion-panel`) and unified easing, then applied these to button and panel transitions for a more premium, consistent feel.
 - Verified changes with a successful production build using `npm run build`.
+
+## 0.0.17 - 2026-03-01
+- Established a clear typography hierarchy in `src/index.css` with reusable semantic classes: `type-heading`, `type-subheading`, and `type-meta`.
+- Applied the hierarchy across primary editor surfaces (`ScreenshotEditor`, `LayerPanel`, `CanvasStage`) so headings, section labels, and metadata now follow consistent scale/weight rules.
+- Improved visual scanning by reducing ad-hoc text sizing and uppercase density in favor of semantic text roles, creating a calmer, less tool-like UI rhythm.
+- Verified the update with a successful production build using `npm run build`.

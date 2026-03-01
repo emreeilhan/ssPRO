@@ -147,6 +147,28 @@ select {
   padding-top: 16px;
 }
 
+.type-heading {
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.type-subheading {
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.type-meta {
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+
 .mono {
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
 }
