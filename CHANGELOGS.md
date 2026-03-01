@@ -195,3 +195,9 @@
 - Updated `LayerPanel` into a cleaner accordion-driven inspector with improved spacing, subtle section separation, and calmer stack/action presentation.
 - Updated canvas shell styling in `CanvasStage` to match the new UI language and removed yellow guide tones in favor of neutral guide colors.
 - Verified the redesign with a successful production build using `npm run build`.
+
+## 0.0.16 - 2026-03-01
+- Implemented a more contextual action bar in `ScreenshotEditor`: kept core active-screen actions visible (`Background`, `Upload`, `Add Text`, `Compare`, `Safe Area`) and moved secondary controls into a compact `More` menu to reduce visual clutter.
+- Upgraded screenshot cards in the left panel to a more content-first layout by enlarging previews and reducing metadata emphasis, improving quick scan quality across variants.
+- Added a global micro-interaction standard in `src/index.css` with shared motion tokens (`--motion-fast`, `--motion-base`, `--motion-panel`) and unified easing, then applied these to button and panel transitions for a more premium, consistent feel.
+- Verified changes with a successful production build using `npm run build`.

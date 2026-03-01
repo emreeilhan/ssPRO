@@ -138,12 +138,14 @@ export default function ScreenshotEditor({
 }) {
   const fileInputRef = useRef(null);
   const projectInputRef = useRef(null);
+  const moreMenuRef = useRef(null);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [compareScreenshotId, setCompareScreenshotId] = useState(null);
   const [isFocusedMode, setIsFocusedMode] = useState(false);
   const [showSafeArea, setShowSafeArea] = useState(true);
   const [showCenterGuides, setShowCenterGuides] = useState(false);
   const [showMarginGrid, setShowMarginGrid] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
 
@@ -229,6 +231,21 @@ export default function ScreenshotEditor({
     return () => window.removeEventListener('keydown', handleKeydown);
   }, []);
 
+  useEffect(() => {
+    if (!isMoreMenuOpen) {
+      return undefined;
+    }
+
+    const handleClickOutside = (event) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, [isMoreMenuOpen]);
+
   const coachingActions = buildCoachingActions({
     screenshot: activeScreenshot,
     onAddTextLayer,
@@ -251,27 +268,30 @@ export default function ScreenshotEditor({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
-          <GhostButton onClick={onUndo} disabled={!canUndo}>
+          <Button variant="ghost" onClick={onUndo} disabled={!canUndo}>
             Undo
-          </GhostButton>
-          <GhostButton onClick={onRedo} disabled={!canRedo}>
+          </Button>
+          <Button variant="ghost" onClick={onRedo} disabled={!canRedo}>
             Redo
-          </GhostButton>
-          <GhostButton onClick={onSaveProject}>Save</GhostButton>
-          <GhostButton onClick={openProjectDialog}>Load</GhostButton>
+          </Button>
+          <Button variant="ghost" onClick={onSaveProject}>Save</Button>
+          <Button variant="ghost" onClick={openProjectDialog}>Load</Button>
           <GhostButton
             onClick={() => setIsFocusedMode((prev) => !prev)}
             className={isFocusedMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
           >
             {isFocusedMode ? 'Exit Focus' : 'Focus Mode'}
-          </GhostButton>
-          <GhostButton onClick={onToggleTheme}>{isDarkMode ? 'Light' : 'Dark'}</GhostButton>
+          </Button>
+          <Button variant="ghost" onClick={onToggleTheme}>{isDarkMode ? 'Light' : 'Dark'}</Button>
           <span className="tag">{devicePreset.width} x {devicePreset.height} px</span>
+          <span className="tag">
+            Screenshot {formatScreenshotNumber(activeScreenshotIndex)} · {activeScreenshot.layers.length} layers
+          </span>
         </div>
       </header>
 
       <main
-        className="workspace-layout transition-[grid-template-columns] duration-200 ease-in-out"
+        className="workspace-layout"
         style={{ '--left-pane': leftPaneWidth, '--right-pane': rightPaneWidth }}
       >
         {!isFocusedMode && (
@@ -284,7 +304,7 @@ export default function ScreenshotEditor({
                   aria-label="Expand screenshots panel"
                 >
                   {'>'}
-                </GhostButton>
+                </Button>
               </div>
             ) : (
               <div className="p-3">
@@ -299,7 +319,7 @@ export default function ScreenshotEditor({
                     aria-label="Collapse screenshots panel"
                   >
                     {'<'}
-                  </GhostButton>
+                  </Button>
                 </div>
 
                 <div className="space-y-2">
@@ -309,7 +329,7 @@ export default function ScreenshotEditor({
                     return (
                       <div
                         key={shot.id}
-                        className={`grid grid-cols-[1fr_auto] items-center rounded-lg px-2 py-2 ${
+                        className={`grid grid-cols-[1fr_auto] items-start rounded-xl px-2 py-2 ${
                           isActive
                             ? 'bg-blue-50/70 dark:bg-blue-500/20'
                             : 'bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/40'
@@ -318,25 +338,25 @@ export default function ScreenshotEditor({
                         <button
                           type="button"
                           onClick={() => onSelectScreenshot(shot.id)}
-                          className="grid grid-cols-[56px_1fr] items-center gap-2 text-left"
+                          className="grid grid-cols-[74px_1fr] items-center gap-3 text-left"
                         >
-                          <ScreenshotThumbnail screenshot={shot} devicePreset={devicePreset} width={54} />
+                          <ScreenshotThumbnail screenshot={shot} devicePreset={devicePreset} width={72} />
                           <div>
                             <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                               Screenshot {formatScreenshotNumber(index)}
                             </div>
-                            <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {shot.layers.length} layers
+                            <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                              {shot.layers.length} layers · {shot.layers.some((layer) => layer.type === 'text') ? 'Text' : 'Visual'}
                             </div>
                           </div>
                         </button>
                         <div className="flex gap-1">
-                          <GhostButton className="h-7 min-w-7 p-0 text-xs" onClick={() => onMoveScreenshot(shot.id, 'up')}>
+                          <Button variant="ghost" className="h-7 min-w-7 p-0 text-xs" onClick={() => onMoveScreenshot(shot.id, 'up')}>
                             ^
-                          </GhostButton>
-                          <GhostButton className="h-7 min-w-7 p-0 text-xs" onClick={() => onMoveScreenshot(shot.id, 'down')}>
+                          </Button>
+                          <Button variant="ghost" className="h-7 min-w-7 p-0 text-xs" onClick={() => onMoveScreenshot(shot.id, 'down')}>
                             v
-                          </GhostButton>
+                          </Button>
                         </div>
                       </div>
                     );
@@ -345,11 +365,11 @@ export default function ScreenshotEditor({
 
                 <div className="divider mt-3 pt-3" />
                 <div className="grid gap-2">
-                  <GhostButton onClick={onAddScreenshot}>Add Screenshot</GhostButton>
-                  <GhostButton onClick={onDuplicateScreenshot}>Duplicate</GhostButton>
-                  <GhostButton className="btn-danger" onClick={onDeleteScreenshot}>
+                  <Button variant="ghost" onClick={onAddScreenshot}>Add Screenshot</Button>
+                  <Button variant="ghost" onClick={onDuplicateScreenshot}>Duplicate</Button>
+                  <Button variant="ghost" className="btn-danger" onClick={onDeleteScreenshot}>
                     Delete
-                  </GhostButton>
+                  </Button>
                 </div>
               </div>
             )}
@@ -357,7 +377,7 @@ export default function ScreenshotEditor({
         )}
 
         <section className="panel p-4">
-          <div className="divider mb-4 grid gap-2 pb-4 xl:grid-cols-[auto_auto_auto_auto_auto_auto_auto_auto_auto_auto_1fr] xl:items-center">
+          <div className="divider mb-4 grid gap-2 pb-4 xl:grid-cols-[auto_auto_auto_auto_auto_1fr] xl:items-center">
             <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
               Background
               <input
@@ -368,45 +388,120 @@ export default function ScreenshotEditor({
               />
             </label>
 
-            <GhostButton onClick={openFileDialog}>Upload</GhostButton>
+            <Button variant="ghost" onClick={openFileDialog}>Upload</Button>
+            <Button variant="ghost" onClick={onAddTextLayer}>Add Text</Button>
+            <GhostButton
+              onClick={() => setIsCompareMode((prev) => !prev)}
+              className={isCompareMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
+            >
+              Compare
+            </Button>
 
             <GhostButton
               onClick={() => setShowSafeArea((prev) => !prev)}
               className={showSafeArea ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
             >
               Safe Area
-            </GhostButton>
-
-            <GhostButton
-              onClick={() => setShowCenterGuides((prev) => !prev)}
-              className={showCenterGuides ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
-            >
-              Center
-            </GhostButton>
-
-            <GhostButton
-              onClick={() => setShowMarginGrid((prev) => !prev)}
-              className={showMarginGrid ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
-            >
-              Margin
-            </GhostButton>
-
-            <GhostButton onClick={onAddTextLayer}>Add Text</GhostButton>
-            <GhostButton onClick={() => onAddDecorLayer('orb')}>Add Orb</GhostButton>
-            <GhostButton onClick={() => onAddDecorLayer('ring')}>Add Ring</GhostButton>
-            <GhostButton onClick={() => onAddDecorLayer('pill')}>Add Pill</GhostButton>
-            <GhostButton onClick={() => onAddDecorLayer('glow')}>Add Glow</GhostButton>
+            </Button>
 
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-              <GhostButton
-                onClick={() => setIsCompareMode((prev) => !prev)}
-                className={isCompareMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
-              >
-                Compare
-              </GhostButton>
-              <GhostButton onClick={() => onAddMockupLayer('realistic')}>Mockup Realistic</GhostButton>
-              <GhostButton onClick={() => onAddMockupLayer('flat')}>Mockup Flat</GhostButton>
-              <GhostButton onClick={() => onAddMockupLayer('rounded')}>Mockup Rounded</GhostButton>
+              <div ref={moreMenuRef} className="relative">
+                <Button variant="ghost" onClick={() => setIsMoreMenuOpen((prev) => !prev)}>
+                  More
+                </Button>
+                {isMoreMenuOpen && (
+                  <div className="hairline absolute right-0 top-11 z-30 grid w-52 gap-1 rounded-xl bg-white p-2 shadow-sm dark:bg-zinc-900">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAddDecorLayer('orb');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="btn btn-ghost justify-start text-left"
+                    >
+                      Add Orb
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAddDecorLayer('ring');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="btn btn-ghost justify-start text-left"
+                    >
+                      Add Ring
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAddDecorLayer('pill');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="btn btn-ghost justify-start text-left"
+                    >
+                      Add Pill
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAddDecorLayer('glow');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="btn btn-ghost justify-start text-left"
+                    >
+                      Add Glow
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAddMockupLayer('realistic');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="btn btn-ghost justify-start text-left"
+                    >
+                      Mockup Realistic
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAddMockupLayer('flat');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="btn btn-ghost justify-start text-left"
+                    >
+                      Mockup Flat
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAddMockupLayer('rounded');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="btn btn-ghost justify-start text-left"
+                    >
+                      Mockup Rounded
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCenterGuides((prev) => !prev);
+                      }}
+                      className={`btn ${showCenterGuides ? 'btn-primary' : 'btn-ghost'} justify-start text-left`}
+                    >
+                      Center Guides
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMarginGrid((prev) => !prev);
+                      }}
+                      className={`btn ${showMarginGrid ? 'btn-primary' : 'btn-ghost'} justify-start text-left`}
+                    >
+                      Margin Grid
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {isCompareMode && (
@@ -544,7 +639,7 @@ export default function ScreenshotEditor({
                   aria-label="Expand inspector panel"
                 >
                   {'<'}
-                </GhostButton>
+                </Button>
               </div>
             ) : (
               <LayerPanel

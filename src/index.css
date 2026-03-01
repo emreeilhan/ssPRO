@@ -12,6 +12,10 @@
   --muted: #667085;
   --accent: #2563eb;
   --accent-soft: rgba(37, 99, 235, 0.08);
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-panel: 200ms;
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 :root.dark {
@@ -22,6 +26,10 @@
   --muted: #9ca3af;
   --accent: #7da6ff;
   --accent-soft: rgba(125, 166, 255, 0.16);
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-panel: 200ms;
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 * {
@@ -67,6 +75,7 @@ select {
   display: grid;
   gap: 16px;
   grid-template-columns: minmax(0, 1fr);
+  transition: grid-template-columns var(--motion-panel) var(--motion-ease);
 }
 
 @media (min-width: 1024px) {
@@ -77,7 +86,7 @@ select {
 
 .pane-width {
   overflow: hidden;
-  transition: width 200ms ease;
+  transition: width var(--motion-panel) var(--motion-ease);
 }
 
 .pane-collapsed {
@@ -92,7 +101,11 @@ select {
   font-weight: 500;
   color: var(--ink);
   background: transparent;
-  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+  transition:
+    background-color var(--motion-base) var(--motion-ease),
+    border-color var(--motion-base) var(--motion-ease),
+    color var(--motion-base) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease);
 }
 
 .btn:hover {
