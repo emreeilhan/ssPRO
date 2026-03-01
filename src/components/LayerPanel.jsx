@@ -109,6 +109,7 @@ export default function LayerPanel({
           onClick={onCollapse}
           className="h-8 w-8 p-0 text-xs"
           aria-label="Collapse inspector panel"
+          title="Collapse inspector panel"
         >
           {'>'}
         </Button>
