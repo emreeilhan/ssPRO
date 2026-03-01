@@ -84,6 +84,14 @@ function buildCoachingActions({ screenshot, onAddTextLayer, onAddDecorLayer, onA
   return [];
 }
 
+function GhostButton({ children, className = '', ...props }) {
+  return (
+    <button type="button" className={`btn btn-ghost ${className}`.trim()} {...props}>
+      {children}
+    </button>
+  );
+}
+
 export default function ScreenshotEditor({
   devicePreset,
   screenshots,
@@ -136,6 +144,8 @@ export default function ScreenshotEditor({
   const [showSafeArea, setShowSafeArea] = useState(true);
   const [showCenterGuides, setShowCenterGuides] = useState(false);
   const [showMarginGrid, setShowMarginGrid] = useState(false);
+  const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
+  const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
 
   if (!activeScreenshot) {
     return null;
@@ -159,8 +169,9 @@ export default function ScreenshotEditor({
     }
 
     const fallbackPrevious = screenshots[activeScreenshotIndex - 1];
-    const fallback = (fallbackPrevious && fallbackPrevious.id !== activeScreenshotId && fallbackPrevious)
-      || compareOptions[0];
+    const fallback =
+      (fallbackPrevious && fallbackPrevious.id !== activeScreenshotId && fallbackPrevious) ||
+      compareOptions[0];
     setCompareScreenshotId(fallback.id);
   }, [activeScreenshotId, activeScreenshotIndex, compareOptions, compareScreenshotId, screenshots]);
 
@@ -226,321 +237,228 @@ export default function ScreenshotEditor({
     openFileDialog,
   });
 
+  const leftPaneWidth = isFocusedMode ? '0px' : isLeftPanelCollapsed ? '52px' : '272px';
+  const rightPaneWidth = isFocusedMode ? '0px' : isRightPanelCollapsed ? '52px' : '344px';
+
   return (
-    <div className="min-h-screen px-4 py-4 md:px-6 md:py-5">
-      <header className="panel mb-4 grid gap-2 border p-4 md:grid-cols-[1fr_auto] md:items-center animate-reveal">
+    <div className="app-shell">
+      <header className="panel topbar mb-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">App Store Screenshot Engine</h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
-            Multi-screenshot publishing utility for {devicePreset.label} export. Ready for App Store QA 🚀
+          <h1 className="text-2xl font-semibold tracking-tight">App Store Screenshot Engine</h1>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Professional screenshot workflow for {devicePreset.label} publishing.
           </p>
         </div>
-        <div className="flex items-center gap-2 md:justify-end">
-          <button
-            type="button"
-            onClick={onUndo}
-            disabled={!canUndo}
-            className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 disabled:opacity-40 dark:hover:bg-zinc-800"
-          >
+
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
+          <GhostButton onClick={onUndo} disabled={!canUndo}>
             Undo
-          </button>
-          <button
-            type="button"
-            onClick={onRedo}
-            disabled={!canRedo}
-            className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 disabled:opacity-40 dark:hover:bg-zinc-800"
-          >
+          </GhostButton>
+          <GhostButton onClick={onRedo} disabled={!canRedo}>
             Redo
-          </button>
-          <button
-            type="button"
-            onClick={onSaveProject}
-            className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            Save Project
-          </button>
-          <button
-            type="button"
-            onClick={openProjectDialog}
-            className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            Load Project
-          </button>
-          <button
-            type="button"
+          </GhostButton>
+          <GhostButton onClick={onSaveProject}>Save</GhostButton>
+          <GhostButton onClick={openProjectDialog}>Load</GhostButton>
+          <GhostButton
             onClick={() => setIsFocusedMode((prev) => !prev)}
-            className={`mono border px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-              isFocusedMode ? 'border-accent text-accent' : 'border-line'
-            }`}
+            className={isFocusedMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
           >
             {isFocusedMode ? 'Exit Focus' : 'Focus Mode'}
-          </button>
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            className="mono border border-line px-2 py-1 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            {isDarkMode ? 'Light mode' : 'Dark mode'}
-          </button>
-          <div className="mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            {devicePreset.width} x {devicePreset.height} px
-          </div>
+          </GhostButton>
+          <GhostButton onClick={onToggleTheme}>{isDarkMode ? 'Light' : 'Dark'}</GhostButton>
+          <span className="tag">{devicePreset.width} x {devicePreset.height} px</span>
         </div>
       </header>
 
-      <main className={`grid gap-4 ${isFocusedMode ? 'lg:grid-cols-[minmax(0,1fr)]' : 'lg:grid-cols-[250px_minmax(0,1fr)_320px]'}`}>
+      <main
+        className="workspace-layout transition-[grid-template-columns] duration-200 ease-in-out"
+        style={{ '--left-pane': leftPaneWidth, '--right-pane': rightPaneWidth }}
+      >
         {!isFocusedMode && (
-        <aside className="panel animate-reveal border p-3" style={{ animationDelay: '80ms' }}>
-          <div className="mb-3 flex items-center justify-between border-b border-line pb-2">
-            <h2 className="mono text-xs font-medium uppercase tracking-widest text-zinc-600 dark:text-zinc-300">Screenshots</h2>
-            <span className="mono text-xs text-zinc-500 dark:text-zinc-400">{screenshots.length}</span>
-          </div>
-
-          <div className="space-y-2">
-            {screenshots.map((shot, index) => {
-              const isActive = shot.id === activeScreenshotId;
-
-              return (
-                <div
-                  key={shot.id}
-                  className={`grid grid-cols-[1fr_auto] items-center border px-2 py-2 ${
-                    isActive ? 'border-accent bg-blue-50/40 dark:bg-blue-500/20' : 'border-line'
-                  }`}
+          <aside className="panel pane-width">
+            {isLeftPanelCollapsed ? (
+              <div className="collapse-rail">
+                <GhostButton
+                  className="h-8 w-8 p-0 text-xs"
+                  onClick={() => setIsLeftPanelCollapsed(false)}
+                  aria-label="Expand screenshots panel"
                 >
-                  <button
-                    type="button"
-                    onClick={() => onSelectScreenshot(shot.id)}
-                    className="grid grid-cols-[56px_1fr] items-center gap-2 text-left"
-                  >
-                    <ScreenshotThumbnail
-                      screenshot={shot}
-                      devicePreset={devicePreset}
-                      width={54}
-                    />
-                    <div>
-                      <div className="mono text-sm font-medium">{formatScreenshotNumber(index)}</div>
-                      <div className="text-xs text-zinc-500 dark:text-zinc-400">{shot.layers.length} layers</div>
-                    </div>
-                  </button>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => onMoveScreenshot(shot.id, 'up')}
-                      className="mono border border-line px-1.5 py-0.5 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onMoveScreenshot(shot.id, 'down')}
-                      className="mono border border-line px-1.5 py-0.5 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    >
-                      ↓
-                    </button>
+                  {'>'}
+                </GhostButton>
+              </div>
+            ) : (
+              <div className="p-3">
+                <div className="divider mb-3 flex items-center justify-between pb-3">
+                  <div>
+                    <h2 className="text-base font-semibold">Screenshots</h2>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{screenshots.length} variants</p>
                   </div>
+                  <GhostButton
+                    className="h-8 w-8 p-0 text-xs"
+                    onClick={() => setIsLeftPanelCollapsed(true)}
+                    aria-label="Collapse screenshots panel"
+                  >
+                    {'<'}
+                  </GhostButton>
                 </div>
-              );
-            })}
-          </div>
 
-          <div className="mt-3 grid gap-2 border-t border-line pt-3">
-            <button
-              type="button"
-              onClick={onAddScreenshot}
-              className="mono border border-line px-2 py-1.5 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Add Screenshot
-            </button>
-            <button
-              type="button"
-              onClick={onDuplicateScreenshot}
-              className="mono border border-line px-2 py-1.5 text-xs uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Duplicate
-            </button>
-            <button
-              type="button"
-              onClick={onDeleteScreenshot}
-              className="mono border border-line px-2 py-1.5 text-xs uppercase tracking-wider text-alert hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              Delete
-            </button>
-          </div>
-        </aside>
+                <div className="space-y-2">
+                  {screenshots.map((shot, index) => {
+                    const isActive = shot.id === activeScreenshotId;
+
+                    return (
+                      <div
+                        key={shot.id}
+                        className={`grid grid-cols-[1fr_auto] items-center rounded-lg px-2 py-2 ${
+                          isActive
+                            ? 'bg-blue-50/70 dark:bg-blue-500/20'
+                            : 'bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/40'
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => onSelectScreenshot(shot.id)}
+                          className="grid grid-cols-[56px_1fr] items-center gap-2 text-left"
+                        >
+                          <ScreenshotThumbnail screenshot={shot} devicePreset={devicePreset} width={54} />
+                          <div>
+                            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                              Screenshot {formatScreenshotNumber(index)}
+                            </div>
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {shot.layers.length} layers
+                            </div>
+                          </div>
+                        </button>
+                        <div className="flex gap-1">
+                          <GhostButton className="h-7 min-w-7 p-0 text-xs" onClick={() => onMoveScreenshot(shot.id, 'up')}>
+                            ^
+                          </GhostButton>
+                          <GhostButton className="h-7 min-w-7 p-0 text-xs" onClick={() => onMoveScreenshot(shot.id, 'down')}>
+                            v
+                          </GhostButton>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="divider mt-3 pt-3" />
+                <div className="grid gap-2">
+                  <GhostButton onClick={onAddScreenshot}>Add Screenshot</GhostButton>
+                  <GhostButton onClick={onDuplicateScreenshot}>Duplicate</GhostButton>
+                  <GhostButton className="btn-danger" onClick={onDeleteScreenshot}>
+                    Delete
+                  </GhostButton>
+                </div>
+              </div>
+            )}
+          </aside>
         )}
 
-        <section className="panel animate-reveal border p-3" style={{ animationDelay: '140ms' }}>
-          <div className="mb-3 grid gap-2 border-b border-line pb-3 md:grid-cols-[auto_auto_auto_auto_auto_auto_auto_auto_auto_auto_1fr] md:items-center">
-            <label className="mono flex items-center gap-2 text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
-              BG
+        <section className="panel p-4">
+          <div className="divider mb-4 grid gap-2 pb-4 xl:grid-cols-[auto_auto_auto_auto_auto_auto_auto_auto_auto_auto_1fr] xl:items-center">
+            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
+              Background
               <input
                 type="color"
                 value={activeScreenshot.backgroundColor}
                 onChange={(event) => onBackgroundChange(event.target.value)}
-                className="h-7 w-10 border border-line"
+                className="hairline h-8 w-10 rounded-md bg-white"
               />
             </label>
 
-            <button
-              type="button"
-              onClick={openFileDialog}
-              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Upload PNG/JPG
-            </button>
+            <GhostButton onClick={openFileDialog}>Upload</GhostButton>
 
-            <button
-              type="button"
+            <GhostButton
               onClick={() => setShowSafeArea((prev) => !prev)}
-              className={`mono border px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                showSafeArea ? 'border-accent text-accent' : 'border-line'
-              }`}
+              className={showSafeArea ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
             >
               Safe Area
-            </button>
+            </GhostButton>
 
-            <button
-              type="button"
+            <GhostButton
               onClick={() => setShowCenterGuides((prev) => !prev)}
-              className={`mono border px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                showCenterGuides ? 'border-accent text-accent' : 'border-line'
-              }`}
+              className={showCenterGuides ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
             >
               Center
-            </button>
+            </GhostButton>
 
-            <button
-              type="button"
+            <GhostButton
               onClick={() => setShowMarginGrid((prev) => !prev)}
-              className={`mono border px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                showMarginGrid ? 'border-accent text-accent' : 'border-line'
-              }`}
+              className={showMarginGrid ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
             >
-              Margin Grid
-            </button>
+              Margin
+            </GhostButton>
 
-            <button
-              type="button"
-              onClick={onAddTextLayer}
-              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Add Text
-            </button>
+            <GhostButton onClick={onAddTextLayer}>Add Text</GhostButton>
+            <GhostButton onClick={() => onAddDecorLayer('orb')}>Add Orb</GhostButton>
+            <GhostButton onClick={() => onAddDecorLayer('ring')}>Add Ring</GhostButton>
+            <GhostButton onClick={() => onAddDecorLayer('pill')}>Add Pill</GhostButton>
+            <GhostButton onClick={() => onAddDecorLayer('glow')}>Add Glow</GhostButton>
 
-            <button
-              type="button"
-              onClick={() => onAddDecorLayer('orb')}
-              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Add Orb
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onAddDecorLayer('ring')}
-              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Add Ring
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onAddDecorLayer('pill')}
-              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Add Pill
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onAddDecorLayer('glow')}
-              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Add Glow
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsCompareMode((prev) => !prev)}
-              className={`mono border px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                isCompareMode ? 'border-accent text-accent' : 'border-line'
-              }`}
-            >
-              Compare
-            </button>
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+              <GhostButton
+                onClick={() => setIsCompareMode((prev) => !prev)}
+                className={isCompareMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
+              >
+                Compare
+              </GhostButton>
+              <GhostButton onClick={() => onAddMockupLayer('realistic')}>Mockup Realistic</GhostButton>
+              <GhostButton onClick={() => onAddMockupLayer('flat')}>Mockup Flat</GhostButton>
+              <GhostButton onClick={() => onAddMockupLayer('rounded')}>Mockup Rounded</GhostButton>
+            </div>
 
             {isCompareMode && (
               <select
                 value={compareScreenshotId || ''}
                 onChange={(event) => setCompareScreenshotId(Number(event.target.value))}
-                className="mono border border-line px-2 py-1.5 text-xs uppercase tracking-wide"
+                className="hairline rounded-lg px-2 py-2 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
               >
                 {compareOptions.map((shot) => {
                   const screenshotOrder = screenshots.findIndex((item) => item.id === shot.id);
                   return (
                     <option key={shot.id} value={shot.id}>
-                      {`Variant ${formatScreenshotNumber(screenshotOrder)} • ${shot.layers.length} layers`}
+                      {`Variant ${formatScreenshotNumber(screenshotOrder)} - ${shot.layers.length} layers`}
                     </option>
                   );
                 })}
               </select>
             )}
 
-            <button
-              type="button"
-              onClick={() => onAddMockupLayer('realistic')}
-              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Mockup Realistic
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onAddMockupLayer('flat')}
-              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Mockup Flat
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onAddMockupLayer('rounded')}
-              className="mono border border-line px-3 py-1.5 text-xs uppercase tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Mockup Rounded
-            </button>
-
-            <div className="mono text-xs text-zinc-500 dark:text-zinc-400 md:text-right">
-              {selectedLayer?.type === 'text' ? `Chars: ${selectedTextLength}` : 'Select a text layer to count'}
+            <div className="text-right text-xs text-zinc-500 dark:text-zinc-400">
+              {selectedLayer?.type === 'text'
+                ? `Character count: ${selectedTextLength}`
+                : 'Select a text layer to show character count'}
             </div>
           </div>
 
           {warnings.length > 0 && (
-            <div className="mb-3 border border-alert/40 bg-red-50 px-3 py-2 dark:bg-red-900/20">
-              <p className="mono mb-1 text-xs uppercase tracking-wide text-alert">Compliance warnings</p>
-              <ul className="space-y-1 text-xs text-alert">
+            <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-red-700 dark:bg-red-900/20 dark:text-red-200">
+              <p className="text-xs font-semibold uppercase tracking-wide">Compliance warnings</p>
+              <ul className="mt-1 space-y-1 text-xs">
                 {warnings.map((warning, index) => (
-                  <li key={`${warning.layerId}-${warning.type}-${index}`}>• {warning.message}</li>
+                  <li key={`${warning.layerId}-${warning.type}-${index}`}>- {warning.message}</li>
                 ))}
               </ul>
             </div>
           )}
 
           {coachingActions.length > 0 && (
-            <div className="mb-3 border border-accent/30 bg-blue-50/50 px-3 py-2 dark:bg-blue-900/20">
-              <p className="mono mb-1 text-xs uppercase tracking-wide text-accent">Quick Start Guidance</p>
-              <div className="grid gap-2 md:grid-cols-2">
+            <div className="mb-4 rounded-lg bg-blue-50/60 px-3 py-3 dark:bg-blue-500/15">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
+                Quick Start Guidance
+              </p>
+              <div className="mt-2 grid gap-2 md:grid-cols-2">
                 {coachingActions.map((action) => (
                   <button
                     key={action.id}
                     type="button"
                     onClick={action.onClick}
-                    className="text-left border border-line bg-white/80 px-2 py-2 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-800"
+                    className="hairline rounded-lg bg-white px-3 py-3 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-800"
                   >
-                    <p className="mono text-xs uppercase tracking-wide text-zinc-800 dark:text-zinc-100">
-                      {action.label}
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{action.hint}</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{action.label}</p>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{action.hint}</p>
                   </button>
                 ))}
               </div>
@@ -611,32 +529,47 @@ export default function ScreenshotEditor({
             className="hidden"
           />
 
-          <div className="mono mt-3 border-t border-line pt-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="divider mt-4 pt-3 text-xs text-zinc-500 dark:text-zinc-400">
             Active screenshot: {formatScreenshotNumber(activeScreenshotIndex)}
           </div>
         </section>
 
         {!isFocusedMode && (
-          <LayerPanel
-            screenshot={activeScreenshot}
-            selectedLayer={selectedLayer}
-            selectedLayerId={selectedLayerId}
-            isExporting={isExporting}
-            exportProgress={exportProgress}
-            warnings={warnings}
-            onSelectLayer={onSetSelectedLayer}
-            onLayerUpdate={onLayerUpdate}
-            onMockupScreenUpload={onMockupScreenUpload}
-            onLayerDelete={onLayerDelete}
-            onLayerVisibility={onLayerVisibility}
-            onLayerLockToggle={onLayerLockToggle}
-            onDuplicateLayer={onDuplicateLayer}
-            onAlignLayer={onAlignLayer}
-            onMoveLayer={onMoveLayer}
-            onExportSingle={onExportSingle}
-            onExportAll={onExportAll}
-            onCancelExport={onCancelExport}
-          />
+          <aside className="panel pane-width">
+            {isRightPanelCollapsed ? (
+              <div className="collapse-rail">
+                <GhostButton
+                  className="h-8 w-8 p-0 text-xs"
+                  onClick={() => setIsRightPanelCollapsed(false)}
+                  aria-label="Expand inspector panel"
+                >
+                  {'<'}
+                </GhostButton>
+              </div>
+            ) : (
+              <LayerPanel
+                screenshot={activeScreenshot}
+                selectedLayer={selectedLayer}
+                selectedLayerId={selectedLayerId}
+                isExporting={isExporting}
+                exportProgress={exportProgress}
+                warnings={warnings}
+                onSelectLayer={onSetSelectedLayer}
+                onLayerUpdate={onLayerUpdate}
+                onMockupScreenUpload={onMockupScreenUpload}
+                onLayerDelete={onLayerDelete}
+                onLayerVisibility={onLayerVisibility}
+                onLayerLockToggle={onLayerLockToggle}
+                onDuplicateLayer={onDuplicateLayer}
+                onAlignLayer={onAlignLayer}
+                onMoveLayer={onMoveLayer}
+                onExportSingle={onExportSingle}
+                onExportAll={onExportAll}
+                onCancelExport={onCancelExport}
+                onCollapse={() => setIsRightPanelCollapsed(true)}
+              />
+            )}
+          </aside>
         )}
       </main>
     </div>

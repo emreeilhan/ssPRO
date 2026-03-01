@@ -210,21 +210,21 @@ export default function CanvasStage({
       }}
       onDragLeave={() => setIsDragActive(false)}
       onDrop={handleDrop}
-      className={`relative border border-line p-2 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-900/20' : 'bg-zinc-100/40 dark:bg-zinc-900/40'}`}
+      className={`relative rounded-xl p-3 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-900/20' : 'bg-zinc-50/90 dark:bg-zinc-900/40'}`}
     >
       {!readOnly && (onCyclePrevScreenshot || onCycleNextScreenshot) && (
-        <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded border border-line bg-white/85 px-1 py-1 shadow-sm backdrop-blur dark:bg-zinc-900/80">
+        <div className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-lg bg-white/90 px-1 py-1 shadow-sm backdrop-blur dark:bg-zinc-900/80">
           <button
             type="button"
             onClick={() => onCyclePrevScreenshot?.()}
-            className="mono border border-line px-1.5 py-0.5 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="btn btn-ghost h-7 px-2 py-0 text-[11px]"
           >
             Prev
           </button>
           <button
             type="button"
             onClick={() => onCycleNextScreenshot?.()}
-            className="mono border border-line px-1.5 py-0.5 text-[11px] uppercase hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="btn btn-ghost h-7 px-2 py-0 text-[11px]"
           >
             Next
           </button>
@@ -232,7 +232,7 @@ export default function CanvasStage({
       )}
 
       {label && (
-        <div className="mono mb-2 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <div className="mb-3 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           {label}
         </div>
       )}
@@ -308,7 +308,7 @@ export default function CanvasStage({
                         <Line
                           key={`grid-v-${index}`}
                           points={[x, safeTop, x, safeTop + safeHeight]}
-                          stroke="#f59e0b"
+                          stroke="#64748b"
                           strokeWidth={1}
                           dash={[2, 5]}
                           listening={false}
@@ -321,7 +321,7 @@ export default function CanvasStage({
                         <Line
                           key={`grid-h-${index}`}
                           points={[safeLeft, y, safeLeft + safeWidth, y]}
-                          stroke="#f59e0b"
+                          stroke="#64748b"
                           strokeWidth={1}
                           dash={[2, 5]}
                           listening={false}
@@ -351,7 +351,7 @@ export default function CanvasStage({
         </Stage>
       </div>
 
-      <p className="mono mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
         {readOnly
           ? 'Comparison panel is read-only.'
           : 'Drag PNG/JPG files here or use upload button. Resize via transform handles. Horizontal scroll changes screenshot.'}

@@ -186,3 +186,12 @@
 - Added Konva-based canvas editor with image/text layers, drag/resize/transform controls, and safe-area guides.
 - Added compliance checks for safe-area overlap and text width overflow warnings.
 - Added single PNG and batch ZIP export utilities rendering at exact 1290x2796 resolution.
+
+## 0.0.15 - 2026-03-01
+- Redesigned the editor into a minimal, neutral, modern SaaS interface using a light gray app background (`#f7f7f8`), white panels, soft blue accents, and no decorative grid textures.
+- Introduced a cleaner global visual system in `src/index.css` with hairline dividers, rounded 8px button styling, thinner top bar treatment, and reduced UI density.
+- Reworked `ScreenshotEditor` layout to support collapsible left Screenshots and right Inspector panels with smooth 200ms ease transitions, including subtle collapse controls and automatic canvas expansion.
+- Refined toolbar and action hierarchy by converting dense square controls into soft ghost/primary buttons and reducing visual noise while preserving existing editing/export capabilities.
+- Updated `LayerPanel` into a cleaner accordion-driven inspector with improved spacing, subtle section separation, and calmer stack/action presentation.
+- Updated canvas shell styling in `CanvasStage` to match the new UI language and removed yellow guide tones in favor of neutral guide colors.
+- Verified the redesign with a successful production build using `npm run build`.
