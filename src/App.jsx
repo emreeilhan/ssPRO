@@ -23,6 +23,35 @@ import {
 } from './utils/screenshotHelpers';
 
 const HISTORY_LIMIT = 60;
+const AUTOSAVE_STORAGE_KEY = 'sspro-project-autosave-v1';
+const AUTOSAVE_DEBOUNCE_MS = 1200;
+
+function formatLastSavedAgo(savedAt, nowMs) {
+  if (!savedAt) {
+    return 'Last saved: not yet';
+  }
+
+  const diffSeconds = Math.max(0, Math.floor((nowMs - savedAt) / 1000));
+  if (diffSeconds < 5) {
+    return 'Last saved just now';
+  }
+  if (diffSeconds < 60) {
+    return `Last saved ${diffSeconds}s ago`;
+  }
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) {
+    return `Last saved ${diffMinutes}m ago`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `Last saved ${diffHours}h ago`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `Last saved ${diffDays}d ago`;
+}
 
 export default function App() {
   const [screenshots, setScreenshots] = useState(createInitialScreenshots);
@@ -32,12 +61,21 @@ export default function App() {
   const [historyFuture, setHistoryFuture] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [isLoadingProject, setIsLoadingProject] = useState(false);
+  const [uiError, setUiError] = useState(null);
+  const [lastAutosaveAt, setLastAutosaveAt] = useState(null);
+  const [autosaveError, setAutosaveError] = useState(null);
+  const [autosaveNowMs, setAutosaveNowMs] = useState(() => Date.now());
   const { isDarkMode, toggleTheme } = useThemePreference();
 
   const screenshotIdRef = useRef(MIN_SCREENSHOTS + 1);
   const layerIdRef = useRef(1);
   const objectUrlRefCountRef = useRef(new Map());
   const exportAbortControllerRef = useRef(null);
+  const autosaveTimerRef = useRef(null);
+  const hasHydratedAutosaveRef = useRef(false);
 
   const activeScreenshotIndex = screenshots.findIndex((item) => item.id === activeScreenshotId);
   const activeScreenshot =
@@ -48,6 +86,58 @@ export default function App() {
     () => getLayerWarnings(activeScreenshot, DEVICE_PRESET),
     [activeScreenshot],
   );
+  const autosaveLabel = useMemo(
+    () => formatLastSavedAgo(lastAutosaveAt, autosaveNowMs),
+    [autosaveNowMs, lastAutosaveAt],
+  );
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIsBootstrapping(false), 280);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const reportUiError = (title, error, fallbackMessage) => {
+    setUiError({
+      title,
+      message: error?.message || fallbackMessage,
+    });
+  };
+
+  const syncIdCountersFromScreenshots = (nextScreenshots) => {
+    const maxScreenshotId = nextScreenshots.reduce(
+      (max, item) => Math.max(max, Number(item.id) || 0),
+      0,
+    );
+    screenshotIdRef.current = Math.max(MIN_SCREENSHOTS + 1, maxScreenshotId + 1);
+
+    const maxLayerNumber = nextScreenshots.reduce((max, item) => {
+      const shotMax = item.layers.reduce((layerMax, layer) => {
+        const match = String(layer.id || '').match(/^layer_(\d+)$/);
+        if (!match) {
+          return layerMax;
+        }
+        return Math.max(layerMax, Number(match[1]) || 0);
+      }, 0);
+      return Math.max(max, shotMax);
+    }, 0);
+    layerIdRef.current = maxLayerNumber + 1;
+  };
+
+  const applyHydratedProject = ({ screenshots: loadedScreenshots, activeScreenshotId: loadedActiveId }) => {
+    setScreenshots(loadedScreenshots);
+    setHistoryPast([]);
+    setHistoryFuture([]);
+    setSelectedLayerId(null);
+
+    const validActiveId = loadedScreenshots.some((item) => item.id === loadedActiveId)
+      ? loadedActiveId
+      : loadedScreenshots[0]?.id;
+    if (validActiveId) {
+      setActiveScreenshotId(validActiveId);
+    }
+
+    syncIdCountersFromScreenshots(loadedScreenshots);
+  };
 
   useEffect(() => {
     if (!screenshots.length) {
@@ -139,9 +229,118 @@ export default function App() {
         window.URL.revokeObjectURL(url);
       }
       objectUrlRefCountRef.current.clear();
+      if (autosaveTimerRef.current) {
+        window.clearTimeout(autosaveTimerRef.current);
+      }
     },
     [],
   );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const hydrateAutosave = async () => {
+      const raw = window.localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+      if (!raw) {
+        hasHydratedAutosaveRef.current = true;
+        return;
+      }
+
+      try {
+        const parsedEntry = JSON.parse(raw);
+        const parsedProject = parsedEntry?.payload ?? parsedEntry;
+        const hydrated = await hydrateProject(parsedProject);
+        const loadedScreenshots = hydrated.screenshots?.length ? hydrated.screenshots : createInitialScreenshots();
+
+        if (!isMounted) {
+          return;
+        }
+
+        applyHydratedProject({
+          screenshots: loadedScreenshots,
+          activeScreenshotId: hydrated.activeScreenshotId,
+        });
+
+        if (parsedEntry?.savedAt) {
+          const savedAtMs = Date.parse(parsedEntry.savedAt);
+          if (Number.isFinite(savedAtMs)) {
+            setLastAutosaveAt(savedAtMs);
+            setAutosaveNowMs(savedAtMs);
+          }
+        }
+      } catch (error) {
+        window.localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+        if (isMounted) {
+          setAutosaveError(error?.message || 'Autosave recovery failed.');
+        }
+      } finally {
+        if (isMounted) {
+          hasHydratedAutosaveRef.current = true;
+        }
+      }
+    };
+
+    hydrateAutosave();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!lastAutosaveAt) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setAutosaveNowMs(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [lastAutosaveAt]);
+
+  useEffect(() => {
+    if (!hasHydratedAutosaveRef.current) {
+      return undefined;
+    }
+
+    if (autosaveTimerRef.current) {
+      window.clearTimeout(autosaveTimerRef.current);
+    }
+
+    autosaveTimerRef.current = window.setTimeout(async () => {
+      try {
+        const payload = await serializeProject({
+          screenshots,
+          activeScreenshotId,
+        });
+        const savedAt = new Date().toISOString();
+
+        window.localStorage.setItem(
+          AUTOSAVE_STORAGE_KEY,
+          JSON.stringify({
+            savedAt,
+            payload,
+          }),
+        );
+
+        const savedAtMs = Date.parse(savedAt);
+        if (Number.isFinite(savedAtMs)) {
+          setLastAutosaveAt(savedAtMs);
+          setAutosaveNowMs(savedAtMs);
+        }
+        setAutosaveError(null);
+      } catch (error) {
+        setAutosaveError(error?.message || 'Autosave failed.');
+      }
+    }, AUTOSAVE_DEBOUNCE_MS);
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        window.clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, [activeScreenshotId, screenshots]);
 
   const commitProjectChange = ({
     nextScreenshots,
@@ -339,49 +538,57 @@ export default function App() {
     }
 
     const parsedLayers = [];
+    setUiError(null);
+    setIsProcessingImages(true);
 
-    for (const file of files) {
-      const imageSrc = createObjectURL(file);
-      let dimensions;
-      try {
-        dimensions = await readImageDimensions(imageSrc);
-      } catch (error) {
-        window.URL.revokeObjectURL(imageSrc);
-        throw error;
+    try {
+      for (const file of files) {
+        const imageSrc = createObjectURL(file);
+        let dimensions;
+        try {
+          dimensions = await readImageDimensions(imageSrc);
+        } catch (error) {
+          window.URL.revokeObjectURL(imageSrc);
+          throw error;
+        }
+        const fitRatio = Math.min(
+          (DEVICE_PRESET.width * 0.92) / dimensions.width,
+          (DEVICE_PRESET.height * 0.92) / dimensions.height,
+          1,
+        );
+
+        const layerWidth = Math.round(dimensions.width * fitRatio);
+        const layerHeight = Math.round(dimensions.height * fitRatio);
+
+        parsedLayers.push({
+          id: allocateLayerId(),
+          type: 'image',
+          name: `Image ${parsedLayers.length + 1}`,
+          visible: true,
+          locked: false,
+          blendMode: 'normal',
+          opacity: 1,
+          imageSrc,
+          x: Math.round((DEVICE_PRESET.width - layerWidth) / 2),
+          y: Math.round((DEVICE_PRESET.height - layerHeight) / 2),
+          width: layerWidth,
+          height: layerHeight,
+          rotation: 0,
+        });
       }
-      const fitRatio = Math.min(
-        (DEVICE_PRESET.width * 0.92) / dimensions.width,
-        (DEVICE_PRESET.height * 0.92) / dimensions.height,
-        1,
+
+      updateActiveScreenshot(
+        (item) => ({
+          ...item,
+          layers: [...item.layers, ...parsedLayers],
+        }),
+        { nextSelectedLayerId: parsedLayers[parsedLayers.length - 1].id },
       );
-
-      const layerWidth = Math.round(dimensions.width * fitRatio);
-      const layerHeight = Math.round(dimensions.height * fitRatio);
-
-      parsedLayers.push({
-        id: allocateLayerId(),
-        type: 'image',
-        name: `Image ${parsedLayers.length + 1}`,
-        visible: true,
-        locked: false,
-        blendMode: 'normal',
-        opacity: 1,
-        imageSrc,
-        x: Math.round((DEVICE_PRESET.width - layerWidth) / 2),
-        y: Math.round((DEVICE_PRESET.height - layerHeight) / 2),
-        width: layerWidth,
-        height: layerHeight,
-        rotation: 0,
-      });
+    } catch (error) {
+      reportUiError('Image Import Failed', error, 'Selected images could not be processed.');
+    } finally {
+      setIsProcessingImages(false);
     }
-
-    updateActiveScreenshot(
-      (item) => ({
-        ...item,
-        layers: [...item.layers, ...parsedLayers],
-      }),
-      { nextSelectedLayerId: parsedLayers[parsedLayers.length - 1].id },
-    );
   };
 
   const handleAddDecorLayer = (kind = 'orb') => {
@@ -671,6 +878,7 @@ export default function App() {
       return;
     }
 
+    setUiError(null);
     setIsExporting(true);
     setExportProgress({
       mode: 'single',
@@ -689,7 +897,7 @@ export default function App() {
       });
     } catch (error) {
       if (error.name !== 'AbortError') {
-        window.alert(error.message || 'Single screenshot export failed.');
+        reportUiError('Single Export Failed', error, 'Single screenshot export failed.');
       }
     } finally {
       setIsExporting(false);
@@ -700,6 +908,7 @@ export default function App() {
   const handleExportAll = async () => {
     const controller = new AbortController();
     exportAbortControllerRef.current = controller;
+    setUiError(null);
     setIsExporting(true);
     setExportProgress({
       mode: 'batch',
@@ -728,7 +937,7 @@ export default function App() {
       });
     } catch (error) {
       if (error.name !== 'AbortError') {
-        window.alert(error.message || 'Batch export failed.');
+        reportUiError('Batch Export Failed', error, 'Batch export failed.');
       }
     } finally {
       exportAbortControllerRef.current = null;
@@ -742,6 +951,7 @@ export default function App() {
   };
 
   const handleSaveProject = async () => {
+    setUiError(null);
     setIsExporting(true);
 
     try {
@@ -753,7 +963,7 @@ export default function App() {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       saveAs(blob, `sspro-project-${timestamp}.json`);
     } catch (error) {
-      window.alert(error.message || 'Project save failed.');
+      reportUiError('Project Save Failed', error, 'Project save failed.');
     } finally {
       setIsExporting(false);
     }
@@ -764,49 +974,24 @@ export default function App() {
       return;
     }
 
+    setUiError(null);
     setIsExporting(true);
+    setIsLoadingProject(true);
 
     try {
       const text = await file.text();
       const parsed = JSON.parse(text);
       const hydrated = await hydrateProject(parsed);
-
-      const loadedScreenshots = hydrated.screenshots;
-      setScreenshots(loadedScreenshots);
-      setHistoryPast([]);
-      setHistoryFuture([]);
-
-      const validActiveId = loadedScreenshots.some((item) => item.id === hydrated.activeScreenshotId)
-        ? hydrated.activeScreenshotId
-        : loadedScreenshots[0]?.id;
-
-      if (validActiveId) {
-        setActiveScreenshotId(validActiveId);
-      }
-
-      setSelectedLayerId(null);
-
-      const maxScreenshotId = loadedScreenshots.reduce(
-        (max, item) => Math.max(max, Number(item.id) || 0),
-        0,
-      );
-      screenshotIdRef.current = Math.max(MIN_SCREENSHOTS + 1, maxScreenshotId + 1);
-
-      const maxLayerNumber = loadedScreenshots.reduce((max, item) => {
-        const shotMax = item.layers.reduce((layerMax, layer) => {
-          const match = String(layer.id || '').match(/^layer_(\d+)$/);
-          if (!match) {
-            return layerMax;
-          }
-          return Math.max(layerMax, Number(match[1]) || 0);
-        }, 0);
-        return Math.max(max, shotMax);
-      }, 0);
-      layerIdRef.current = maxLayerNumber + 1;
+      const loadedScreenshots = hydrated.screenshots?.length ? hydrated.screenshots : createInitialScreenshots();
+      applyHydratedProject({
+        screenshots: loadedScreenshots,
+        activeScreenshotId: hydrated.activeScreenshotId,
+      });
     } catch (error) {
-      window.alert(error.message || 'Project load failed.');
+      reportUiError('Project Load Failed', error, 'Project load failed.');
     } finally {
       setIsExporting(false);
+      setIsLoadingProject(false);
     }
   };
 
@@ -823,6 +1008,8 @@ export default function App() {
       isExporting={isExporting}
       exportProgress={exportProgress}
       isDarkMode={isDarkMode}
+      autosaveLabel={autosaveLabel}
+      autosaveError={autosaveError}
       onSelectScreenshot={setActiveScreenshotId}
       onSetSelectedLayer={setSelectedLayerId}
       onBackgroundChange={handleBackgroundChange}
@@ -859,6 +1046,11 @@ export default function App() {
       canUndo={canUndo}
       canRedo={canRedo}
       onToggleTheme={toggleTheme}
+      isBootstrapping={isBootstrapping}
+      isProcessingImages={isProcessingImages}
+      isLoadingProject={isLoadingProject}
+      uiError={uiError}
+      onDismissUiError={() => setUiError(null)}
     />
   );
 }

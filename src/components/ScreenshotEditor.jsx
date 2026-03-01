@@ -12,6 +12,36 @@ function formatScreenshotNumber(index) {
   return String(index + 1).padStart(2, '0');
 }
 
+function SkeletonBlock({ className = '' }) {
+  return <div className={`skeleton-block ${className}`.trim()} />;
+}
+
+function EditorSkeleton({ label = 'Loading editor...' }) {
+  return (
+    <div className="app-shell app-shell-modern">
+      <div className="app-content-shell">
+        <div className="mb-4 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-4">
+          <SkeletonBlock className="mb-3 h-7 w-64" />
+          <SkeletonBlock className="h-4 w-80" />
+        </div>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_332px]">
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-4">
+            <SkeletonBlock className="mb-3 h-6 w-44" />
+            <SkeletonBlock className="mb-3 h-[420px] w-full" />
+            <p className="type-meta">{label}</p>
+          </div>
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
+            <SkeletonBlock className="mb-3 h-5 w-28" />
+            <SkeletonBlock className="mb-2 h-9 w-full" />
+            <SkeletonBlock className="mb-2 h-9 w-full" />
+            <SkeletonBlock className="h-9 w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TopbarGroup({ label, children }) {
   return (
     <div className="topbar-group">
@@ -110,6 +140,8 @@ export default function ScreenshotEditor({
   isExporting,
   exportProgress,
   isDarkMode,
+  autosaveLabel,
+  autosaveError,
   onSelectScreenshot,
   onSetSelectedLayer,
   onBackgroundChange,
@@ -146,6 +178,11 @@ export default function ScreenshotEditor({
   canUndo,
   canRedo,
   onToggleTheme,
+  isBootstrapping,
+  isProcessingImages,
+  isLoadingProject,
+  uiError,
+  onDismissUiError,
 }) {
   const fileInputRef = useRef(null);
   const projectInputRef = useRef(null);
@@ -162,8 +199,24 @@ export default function ScreenshotEditor({
   const [dragScreenshotId, setDragScreenshotId] = useState(null);
   const [dropScreenshotId, setDropScreenshotId] = useState(null);
 
+  if (isBootstrapping) {
+    return <EditorSkeleton label="Preparing workspace..." />;
+  }
+
   if (!activeScreenshot) {
-    return null;
+    return (
+      <div className="app-shell app-shell-modern">
+        <div className="app-content-shell">
+          <Card className="p-6">
+            <h2 className="type-subheading mb-2">No Screenshots Yet</h2>
+            <p className="type-meta mb-4">
+              Create your first screenshot to start building the App Store set.
+            </p>
+            <Button variant="primary" onClick={onAddScreenshot}>Create Screenshot</Button>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   const background = resolveBackgroundConfig(activeScreenshot);
@@ -272,8 +325,132 @@ export default function ScreenshotEditor({
   const rightPaneWidth = isFocusedMode ? '0px' : isRightPanelCollapsed ? '52px' : '344px';
 
   return (
-    <div className="app-shell">
-      <Card as="header" className="topbar topbar-modern mb-4">
+    <div className="app-shell app-shell-modern" style={{ '--left-pane': leftPaneWidth }}>
+      {uiError && (
+        <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-500/30 dark:bg-red-900/20 dark:text-red-200">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="type-subheading text-red-700 dark:text-red-200">{uiError.title || 'Something went wrong'}</p>
+              <p className="type-meta mt-1 text-red-600 dark:text-red-200/80">{uiError.message}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={onDismissUiError}>Dismiss</Button>
+          </div>
+        </div>
+      )}
+
+      {!isFocusedMode && (
+        <Card as="aside" className="pane-width left-sidebar-shell">
+          {isLeftPanelCollapsed ? (
+            <div className="collapse-rail">
+              <Button variant="ghost"
+                className="h-8 w-8 p-0 text-xs"
+                onClick={() => setIsLeftPanelCollapsed(false)}
+                aria-label="Expand screenshots panel"
+              >
+                {'>'}
+              </Button>
+            </div>
+          ) : (
+            <div className="p-3">
+              <div className="divider mb-3 flex items-center justify-between pb-3">
+                <div>
+                  <h2 className="type-subheading">Screenshots</h2>
+                  <p className="type-meta">{screenshots.length} variants</p>
+                </div>
+                <Button variant="ghost"
+                  className="h-8 w-8 p-0 text-xs"
+                  onClick={() => setIsLeftPanelCollapsed(true)}
+                  aria-label="Collapse screenshots panel"
+                >
+                  {'<'}
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {screenshots.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-[var(--line)] px-3 py-4">
+                    <p className="type-subheading mb-1">Empty Project</p>
+                    <p className="type-meta">Add a screenshot to start editing.</p>
+                  </div>
+                )}
+                {screenshots.map((shot, index) => {
+                  const isActive = shot.id === activeScreenshotId;
+                  const isDropTarget = dropScreenshotId === shot.id && dragScreenshotId !== shot.id;
+
+                  return (
+                    <div
+                      key={shot.id}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.dataTransfer.setData('text/plain', String(shot.id));
+                        setDragScreenshotId(shot.id);
+                        setDropScreenshotId(null);
+                      }}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'move';
+                        if (dragScreenshotId !== shot.id) {
+                          setDropScreenshotId(shot.id);
+                        }
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const draggedId = Number(event.dataTransfer.getData('text/plain')) || dragScreenshotId;
+                        if (draggedId && draggedId !== shot.id) {
+                          onReorderScreenshot(draggedId, shot.id);
+                        }
+                        setDragScreenshotId(null);
+                        setDropScreenshotId(null);
+                      }}
+                      onDragEnd={() => {
+                        setDragScreenshotId(null);
+                        setDropScreenshotId(null);
+                      }}
+                      className={`interactive-card grid grid-cols-[1fr_auto] items-start rounded-xl px-2 py-2 ${
+                        isActive
+                          ? 'bg-blue-50/70 dark:bg-blue-500/24'
+                          : 'bg-transparent hover:bg-zinc-50 dark:hover:bg-white/5'
+                      } ${isDropTarget ? 'ring-2 ring-blue-300 dark:ring-blue-500/60' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => onSelectScreenshot(shot.id)}
+                        className="grid grid-cols-[74px_1fr] items-center gap-3 text-left"
+                      >
+                        <ScreenshotThumbnail screenshot={shot} devicePreset={devicePreset} width={72} />
+                        <div>
+                          <div className="type-subheading text-zinc-900 dark:text-zinc-50">
+                            Screenshot {formatScreenshotNumber(index)}
+                          </div>
+                          <div className="type-meta">
+                            {shot.layers.length} layers · {shot.layers.some((layer) => layer.type === 'text') ? 'Text' : 'Visual'}
+                          </div>
+                        </div>
+                      </button>
+                      <div className="type-meta flex items-center px-2">
+                        Drag
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="divider mt-3 pt-3" />
+              <div className="grid gap-2">
+                <Button variant="ghost" onClick={onAddScreenshot}>Add Screenshot</Button>
+                <Button variant="ghost" onClick={onDuplicateScreenshot}>Duplicate</Button>
+                <Button variant="danger" onClick={onDeleteScreenshot}>
+                  Delete
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      <div className="app-content-shell">
+        <Card as="header" className="topbar topbar-modern mb-4">
         <div className="topbar-modern__identity">
           <span className="topbar-eyebrow">Creative Workflow</span>
           <h1 className="type-heading">App Store Screenshot Engine</h1>
@@ -345,123 +522,21 @@ export default function ScreenshotEditor({
             <span className="topbar-status">
             Screenshot {formatScreenshotNumber(activeScreenshotIndex)} · {activeScreenshot.layers.length} layers
             </span>
+            <span className="topbar-status">{autosaveLabel}</span>
+            {autosaveError && <span className="topbar-status text-red-600 dark:text-red-300">{autosaveError}</span>}
           </div>
         </div>
-      </Card>
+        </Card>
 
-      <main
-        className="workspace-layout"
-        style={{ '--left-pane': leftPaneWidth, '--right-pane': rightPaneWidth }}
-      >
-        {!isFocusedMode && (
-          <Card as="aside" className="pane-width">
-            {isLeftPanelCollapsed ? (
-              <div className="collapse-rail">
-                <Button variant="ghost"
-                  className="h-8 w-8 p-0 text-xs"
-                  onClick={() => setIsLeftPanelCollapsed(false)}
-                  aria-label="Expand screenshots panel"
-                >
-                  {'>'}
-                </Button>
-              </div>
-            ) : (
-              <div className="p-3">
-                <div className="divider mb-3 flex items-center justify-between pb-3">
-                  <div>
-                    <h2 className="type-subheading">Screenshots</h2>
-                    <p className="type-meta">{screenshots.length} variants</p>
-                  </div>
-                  <Button variant="ghost"
-                    className="h-8 w-8 p-0 text-xs"
-                    onClick={() => setIsLeftPanelCollapsed(true)}
-                    aria-label="Collapse screenshots panel"
-                  >
-                    {'<'}
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  {screenshots.map((shot, index) => {
-                    const isActive = shot.id === activeScreenshotId;
-                    const isDropTarget = dropScreenshotId === shot.id && dragScreenshotId !== shot.id;
-
-                    return (
-                      <div
-                        key={shot.id}
-                        draggable
-                        onDragStart={(event) => {
-                          event.dataTransfer.effectAllowed = 'move';
-                          event.dataTransfer.setData('text/plain', String(shot.id));
-                          setDragScreenshotId(shot.id);
-                          setDropScreenshotId(null);
-                        }}
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          event.dataTransfer.dropEffect = 'move';
-                          if (dragScreenshotId !== shot.id) {
-                            setDropScreenshotId(shot.id);
-                          }
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          const draggedId = Number(event.dataTransfer.getData('text/plain')) || dragScreenshotId;
-                          if (draggedId && draggedId !== shot.id) {
-                            onReorderScreenshot(draggedId, shot.id);
-                          }
-                          setDragScreenshotId(null);
-                          setDropScreenshotId(null);
-                        }}
-                        onDragEnd={() => {
-                          setDragScreenshotId(null);
-                          setDropScreenshotId(null);
-                        }}
-                        className={`interactive-card grid grid-cols-[1fr_auto] items-start rounded-xl px-2 py-2 ${
-                          isActive
-                            ? 'bg-blue-50/70 dark:bg-blue-500/20'
-                            : 'bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/40'
-                        } ${isDropTarget ? 'ring-2 ring-blue-300 dark:ring-blue-500/60' : ''}`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => onSelectScreenshot(shot.id)}
-                          className="grid grid-cols-[74px_1fr] items-center gap-3 text-left"
-                        >
-                          <ScreenshotThumbnail screenshot={shot} devicePreset={devicePreset} width={72} />
-                          <div>
-                            <div className="type-subheading text-zinc-900 dark:text-zinc-100">
-                              Screenshot {formatScreenshotNumber(index)}
-                            </div>
-                            <div className="type-meta">
-                              {shot.layers.length} layers · {shot.layers.some((layer) => layer.type === 'text') ? 'Text' : 'Visual'}
-                            </div>
-                          </div>
-                        </button>
-                        <div className="type-meta flex items-center px-2">
-                          Drag
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="divider mt-3 pt-3" />
-                <div className="grid gap-2">
-                  <Button variant="ghost" onClick={onAddScreenshot}>Add Screenshot</Button>
-                  <Button variant="ghost" onClick={onDuplicateScreenshot}>Duplicate</Button>
-                  <Button variant="danger" onClick={onDeleteScreenshot}>
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Card>
-        )}
+        <main
+          className="workspace-layout"
+          style={{ '--right-pane': rightPaneWidth }}
+        >
 
         <Card as="section" className="p-4">
           <div className="divider mb-4 grid gap-2 pb-4 xl:grid-cols-[auto_auto_auto_auto_auto_1fr] xl:items-center">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="type-meta uppercase text-zinc-600 dark:text-zinc-300">Background</span>
+              <span className="type-meta uppercase text-zinc-600 dark:text-zinc-200">Background</span>
               <Select
                 value={background.type}
                 onChange={(event) => onBackgroundTypeChange(event.target.value)}
@@ -510,14 +585,14 @@ export default function ScreenshotEditor({
             <Button variant="ghost" onClick={onAddTextLayer}>Add Text</Button>
             <Button variant="ghost"
               onClick={() => setIsCompareMode((prev) => !prev)}
-              className={isCompareMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
+              className={isCompareMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-400/60 dark:bg-blue-500/24 dark:text-blue-100' : ''}
             >
               Compare
             </Button>
 
             <Button variant="ghost"
               onClick={() => setShowSafeArea((prev) => !prev)}
-              className={showSafeArea ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
+              className={showSafeArea ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-400/60 dark:bg-blue-500/24 dark:text-blue-100' : ''}
             >
               Safe Area
             </Button>
@@ -528,7 +603,7 @@ export default function ScreenshotEditor({
                   More
                 </Button>
                 {isMoreMenuOpen && (
-                  <div className="surface-popover hairline absolute right-0 top-11 z-30 grid w-52 gap-1 rounded-xl bg-white p-2 shadow-sm dark:bg-zinc-900">
+                  <div className="surface-popover hairline absolute right-0 top-11 z-30 grid w-52 gap-1 rounded-xl bg-white p-2 shadow-sm dark:bg-black">
                     <Button
                       variant="ghost"
                       onClick={() => {
@@ -626,7 +701,7 @@ export default function ScreenshotEditor({
               <Select
                 value={compareScreenshotId || ''}
                 onChange={(event) => setCompareScreenshotId(Number(event.target.value))}
-                className="type-meta py-2 text-zinc-700 dark:text-zinc-200"
+                className="type-meta py-2 text-zinc-700 dark:text-zinc-100"
               >
                 {compareOptions.map((shot) => {
                   const screenshotOrder = screenshots.findIndex((item) => item.id === shot.id);
@@ -660,8 +735,8 @@ export default function ScreenshotEditor({
                     onClick={() => onApplyBackgroundPreset(preset)}
                     className={`hairline inline-flex items-center gap-2 rounded-md px-2 py-1 text-left transition ${
                       isActive
-                        ? 'border-blue-300 bg-blue-50/70 text-blue-700 dark:border-blue-500/60 dark:bg-blue-500/20 dark:text-blue-200'
-                        : 'bg-white hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800'
+                        ? 'border-blue-300 bg-blue-50/70 text-blue-700 dark:border-blue-400/60 dark:bg-blue-500/24 dark:text-blue-100'
+                        : 'bg-white hover:bg-zinc-50 dark:bg-black dark:hover:bg-white/5'
                     }`}
                     title={`${preset.label} (${preset.type})`}
                   >
@@ -682,8 +757,8 @@ export default function ScreenshotEditor({
           </div>
 
           {warnings.length > 0 && (
-            <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-red-700 dark:bg-red-900/20 dark:text-red-200">
-              <p className="type-meta uppercase text-zinc-700 dark:text-zinc-200">Compliance warnings</p>
+            <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-red-700 dark:bg-red-950/30 dark:text-red-100">
+              <p className="type-meta uppercase text-zinc-700 dark:text-zinc-100">Compliance warnings</p>
               <ul className="type-meta mt-1 space-y-1">
                 {warnings.map((warning, index) => (
                   <li key={`${warning.layerId}-${warning.type}-${index}`}>- {warning.message}</li>
@@ -693,8 +768,8 @@ export default function ScreenshotEditor({
           )}
 
           {coachingActions.length > 0 && (
-            <div className="mb-4 rounded-lg bg-blue-50/60 px-3 py-3 dark:bg-blue-500/15">
-              <p className="type-meta uppercase text-blue-700 dark:text-blue-200">
+            <div className="mb-4 rounded-lg bg-blue-50/60 px-3 py-3 dark:bg-blue-950/30">
+              <p className="type-meta uppercase text-blue-700 dark:text-blue-100">
                 Quick Start Guidance
               </p>
               <div className="mt-2 grid gap-2 md:grid-cols-2">
@@ -703,9 +778,9 @@ export default function ScreenshotEditor({
                     key={action.id}
                     variant="ghost"
                     onClick={action.onClick}
-                    className="interactive-card hairline w-full rounded-lg bg-white px-3 py-3 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-800"
+                    className="interactive-card hairline w-full rounded-lg bg-white px-3 py-3 text-left transition-colors hover:bg-zinc-50 dark:bg-black dark:hover:bg-white/5"
                   >
-                    <p className="type-subheading text-zinc-900 dark:text-zinc-100">{action.label}</p>
+                    <p className="type-subheading text-zinc-900 dark:text-zinc-50">{action.label}</p>
                     <p className="type-meta mt-1">{action.hint}</p>
                   </Button>
                 ))}
@@ -713,7 +788,15 @@ export default function ScreenshotEditor({
             </div>
           )}
 
-          {isCompareMode && compareScreenshot ? (
+          {isLoadingProject || isProcessingImages ? (
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-4">
+              <SkeletonBlock className="mb-3 h-6 w-40" />
+              <SkeletonBlock className="mb-3 h-[360px] w-full" />
+              <p className="type-meta">
+                {isLoadingProject ? 'Loading project...' : 'Processing images...'}
+              </p>
+            </div>
+          ) : isCompareMode && compareScreenshot ? (
             <div className="grid gap-3 xl:grid-cols-2">
               <CanvasStage
                 screenshot={activeScreenshot}
@@ -819,7 +902,8 @@ export default function ScreenshotEditor({
             )}
           </Card>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

@@ -18,16 +18,16 @@ const blendModes = [
 ];
 
 const layerTypeMeta = {
-  text: { icon: 'TXT', tone: 'text-blue-700 bg-blue-50 dark:text-blue-200 dark:bg-blue-900/30' },
-  image: { icon: 'IMG', tone: 'text-emerald-700 bg-emerald-50 dark:text-emerald-200 dark:bg-emerald-900/30' },
-  mockup: { icon: 'MCK', tone: 'text-violet-700 bg-violet-50 dark:text-violet-200 dark:bg-violet-900/30' },
-  shape: { icon: 'SHP', tone: 'text-slate-700 bg-slate-100 dark:text-slate-200 dark:bg-slate-700/40' },
+  text: { icon: 'TXT', tone: 'text-blue-700 bg-blue-50 dark:text-blue-100 dark:bg-blue-950/35' },
+  image: { icon: 'IMG', tone: 'text-emerald-700 bg-emerald-50 dark:text-emerald-100 dark:bg-emerald-950/35' },
+  mockup: { icon: 'MCK', tone: 'text-violet-700 bg-violet-50 dark:text-violet-100 dark:bg-violet-950/35' },
+  shape: { icon: 'SHP', tone: 'text-slate-700 bg-slate-100 dark:text-slate-100 dark:bg-white/10' },
 };
 
 function Field({ label, children }) {
   return (
     <label className="grid gap-1.5 text-xs">
-      <span className="type-meta uppercase text-zinc-500 dark:text-zinc-400">
+      <span className="type-meta uppercase text-zinc-500 dark:text-zinc-300">
         {label}
       </span>
       {children}
@@ -37,13 +37,13 @@ function Field({ label, children }) {
 
 function AccordionSection({ title, isOpen, onToggle, children }) {
   return (
-    <section className="rounded-lg bg-zinc-50/70 dark:bg-zinc-900/40">
+    <section className="rounded-lg bg-zinc-50/70 dark:bg-black">
       <button
         type="button"
         onClick={onToggle}
         className="flex w-full items-center justify-between px-3 py-2.5 text-left"
       >
-        <span className="type-subheading text-zinc-800 dark:text-zinc-200">{title}</span>
+        <span className="type-subheading text-zinc-800 dark:text-zinc-100">{title}</span>
         <span className="type-meta">{isOpen ? '-' : '+'}</span>
       </button>
       {isOpen && <div className="grid gap-3 px-3 pb-3">{children}</div>}
@@ -114,7 +114,7 @@ export default function LayerPanel({
         </Button>
       </div>
 
-      <div className="space-y-1.5 rounded-lg bg-zinc-50/60 p-2 dark:bg-zinc-900/40">
+      <div className="space-y-1.5 rounded-lg bg-zinc-50/60 p-2 dark:bg-black">
         <div className="type-meta px-1 uppercase">
           Layer stack
         </div>
@@ -127,14 +127,14 @@ export default function LayerPanel({
             const isSelected = selectedLayerId === layer.id;
             const meta = layerTypeMeta[layer.type] || {
               icon: 'LYR',
-              tone: 'text-zinc-700 bg-zinc-100 dark:text-zinc-200 dark:bg-zinc-700/40',
+              tone: 'text-zinc-700 bg-zinc-100 dark:text-zinc-100 dark:bg-white/10',
             };
 
             return (
               <div
                 key={layer.id}
                 className={`interactive-card grid grid-cols-[1fr_auto] items-center gap-2 rounded-md px-2 py-2 ${
-                  isSelected ? 'bg-blue-50/80 dark:bg-blue-500/20' : 'bg-white/75 dark:bg-zinc-900/60'
+                  isSelected ? 'bg-blue-50/80 dark:bg-blue-500/24' : 'bg-white/75 dark:bg-black'
                 }`}
               >
                 <button type="button" onClick={() => onSelectLayer(layer.id)} className="text-left">
@@ -144,12 +144,12 @@ export default function LayerPanel({
                     >
                       {meta.icon}
                     </span>
-                    <span className="type-subheading leading-4 text-zinc-900 dark:text-zinc-100">{layer.name}</span>
+                    <span className="type-subheading leading-4 text-zinc-900 dark:text-zinc-50">{layer.name}</span>
                   </div>
                   <div className="type-meta mt-1 flex items-center gap-1 uppercase">
                     <span>{layer.type}</span>
-                    {layer.locked && <span className="rounded bg-zinc-200 px-1 py-0.5 dark:bg-zinc-700">Locked</span>}
-                    {layer.visible === false && <span className="rounded bg-red-100 px-1 py-0.5 text-red-700 dark:bg-red-900/40 dark:text-red-200">Hidden</span>}
+                    {layer.locked && <span className="rounded bg-zinc-200 px-1 py-0.5 dark:bg-white/15">Locked</span>}
+                    {layer.visible === false && <span className="rounded bg-red-100 px-1 py-0.5 text-red-700 dark:bg-red-950/35 dark:text-red-100">Hidden</span>}
                   </div>
                 </button>
                 <div className="flex gap-1">
@@ -192,7 +192,7 @@ export default function LayerPanel({
         <div className="mt-3 grid gap-3">
           <div className="flex items-center justify-between">
             <div>
-              <div className="type-subheading text-zinc-900 dark:text-zinc-100">{selectedLayer.name}</div>
+              <div className="type-subheading text-zinc-900 dark:text-zinc-50">{selectedLayer.name}</div>
               <div className="type-meta uppercase">{selectedLayer.type}</div>
             </div>
             <div className="flex gap-1">
@@ -209,7 +209,7 @@ export default function LayerPanel({
           </div>
 
           {selectedWarnings.length > 0 && (
-            <div className="type-meta rounded-lg bg-red-50 px-2 py-2 text-red-700 dark:bg-red-900/20 dark:text-red-200">
+            <div className="type-meta rounded-lg bg-red-50 px-2 py-2 text-red-700 dark:bg-red-950/35 dark:text-red-100">
               {selectedWarnings.map((warning, index) => (
                 <p key={`${warning.type}-${index}`}>- {warning.message}</p>
               ))}
@@ -663,7 +663,7 @@ export default function LayerPanel({
           </AccordionSection>
         </div>
       ) : (
-        <div className="type-meta mt-3 rounded-lg bg-zinc-50/70 px-3 py-3 dark:bg-zinc-900/40">
+        <div className="type-meta mt-3 rounded-lg bg-zinc-50/70 px-3 py-3 dark:bg-black">
           Select a layer to edit properties.
         </div>
       )}
@@ -672,14 +672,14 @@ export default function LayerPanel({
         <div className="type-meta uppercase">Export</div>
 
         {isExporting && exportProgress && (
-          <div className="grid gap-1 rounded-lg bg-zinc-50 px-2 py-2 dark:bg-zinc-900/40">
+          <div className="grid gap-1 rounded-lg bg-zinc-50 px-2 py-2 dark:bg-black">
             <div className="flex items-center justify-between">
-              <p className="type-meta uppercase text-zinc-600 dark:text-zinc-300">
+              <p className="type-meta uppercase text-zinc-600 dark:text-zinc-100">
                 {exportProgress.message || 'Exporting...'}
               </p>
               <span className="type-meta">{exportPercent}%</span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded bg-zinc-200 dark:bg-zinc-700">
+            <div className="h-1.5 overflow-hidden rounded bg-zinc-200 dark:bg-white/15">
               <div
                 className="h-full bg-blue-500 transition-[width] duration-200 ease-out"
                 style={{ width: `${exportPercent}%` }}

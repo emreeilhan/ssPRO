@@ -250,7 +250,7 @@
 - Upgraded typography in the app shell to a `Manrope` + `Sora` pairing to improve product-level visual character and readability.
 - Verified changes with a successful production build using `npm run build`.
 
-## 0.0.22 - 2026-03-01
+## 0.0.23 - 2026-03-01
 - Added reusable loading micro-interaction support to `src/components/ui/Button.jsx` with semantic `loading`/`loadingLabel` props, spinner rendering, and `aria-busy` feedback.
 - Expanded interaction feedback in `src/index.css` with stronger `focus-visible` rings, hover/press motion for buttons, and reduced-motion safeguards for accessibility.
 - Introduced animated micro-surface patterns: `interactive-card` (hover lift + focus-within highlight) and `surface-popover` (soft entry animation), then applied them in `ScreenshotEditor`, `LayerPanel`, and `CanvasStage`.
@@ -262,3 +262,9 @@
 - Implemented a transient animated selection ring using the selected Konva node bounding box so users can instantly locate the active layer.
 - Cleans up animation frame resources on selection changes/unmount to keep interactions smooth.
 - Verified behavior with a successful production build using `npm run build`.
+
+## 0.0.24 - 2026-03-01
+- Refactored editor shell layout so the `Screenshots` panel is now a true left sidebar outside the center workspace flow, matching chat-style app structure.
+- Moved header into the main content column (separate from left sidebar) and adjusted heading alignment for a more centered-leading composition.
+- Updated responsive grid behavior: desktop now uses `left-sidebar + content` shell and `canvas + inspector` workspace columns for clearer visual hierarchy.
+- Verified changes with a successful production build using `npm run build`.
