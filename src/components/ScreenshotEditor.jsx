@@ -10,6 +10,15 @@ function formatScreenshotNumber(index) {
   return String(index + 1).padStart(2, '0');
 }
 
+function TopbarGroup({ label, children }) {
+  return (
+    <div className="hairline flex flex-wrap items-center gap-2 rounded-lg bg-white/70 px-2 py-1 dark:bg-zinc-900/40">
+      <span className="type-meta whitespace-nowrap uppercase">{label}</span>
+      <div className="flex flex-wrap items-center gap-1">{children}</div>
+    </div>
+  );
+}
+
 function buildCoachingActions({ screenshot, onAddTextLayer, onAddDecorLayer, onAddMockupLayer, openFileDialog }) {
   const layers = screenshot?.layers || [];
   const hasText = layers.some((layer) => layer.type === 'text');
@@ -263,21 +272,47 @@ export default function ScreenshotEditor({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
-          <Button variant="ghost" onClick={onUndo} disabled={!canUndo}>
-            Undo
-          </Button>
-          <Button variant="ghost" onClick={onRedo} disabled={!canRedo}>
-            Redo
-          </Button>
-          <Button variant="ghost" onClick={onSaveProject}>Save</Button>
-          <Button variant="ghost" onClick={openProjectDialog}>Load</Button>
-          <Button variant="ghost"
-            onClick={() => setIsFocusedMode((prev) => !prev)}
-            className={isFocusedMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
-          >
-            {isFocusedMode ? 'Exit Focus' : 'Focus Mode'}
-          </Button>
-          <Button variant="ghost" onClick={onToggleTheme}>{isDarkMode ? 'Light' : 'Dark'}</Button>
+          <TopbarGroup label="Edit">
+            <Button variant="ghost" size="sm" onClick={onUndo} disabled={!canUndo}>
+              Undo
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onRedo} disabled={!canRedo}>
+              Redo
+            </Button>
+          </TopbarGroup>
+
+          <TopbarGroup label="Project">
+            <Button variant="ghost" size="sm" onClick={onSaveProject}>Save</Button>
+            <Button variant="ghost" size="sm" onClick={openProjectDialog}>Load</Button>
+          </TopbarGroup>
+
+          <TopbarGroup label="View">
+            <Button variant="ghost"
+              size="sm"
+              onClick={() => setIsFocusedMode((prev) => !prev)}
+              className={isFocusedMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200' : ''}
+            >
+              {isFocusedMode ? 'Exit Focus' : 'Focus Mode'}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onToggleTheme}>
+              {isDarkMode ? 'Light' : 'Dark'}
+            </Button>
+          </TopbarGroup>
+
+          <TopbarGroup label="Export">
+            <Button variant="ghost" size="sm" onClick={onExportSingle} disabled={isExporting}>
+              Export PNG
+            </Button>
+            <Button variant="primary" size="sm" onClick={onExportAll} disabled={isExporting}>
+              Export All
+            </Button>
+            {isExporting && (
+              <Button variant="danger" size="sm" onClick={onCancelExport}>
+                Cancel
+              </Button>
+            )}
+          </TopbarGroup>
+
           <span className="type-meta">{devicePreset.width} x {devicePreset.height} px</span>
           <span className="type-meta">
             Screenshot {formatScreenshotNumber(activeScreenshotIndex)} · {activeScreenshot.layers.length} layers

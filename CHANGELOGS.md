@@ -207,3 +207,8 @@
 - Applied the hierarchy across primary editor surfaces (`ScreenshotEditor`, `LayerPanel`, `CanvasStage`) so headings, section labels, and metadata now follow consistent scale/weight rules.
 - Improved visual scanning by reducing ad-hoc text sizing and uppercase density in favor of semantic text roles, creating a calmer, less tool-like UI rhythm.
 - Verified the update with a successful production build using `npm run build`.
+
+## 0.0.18 - 2026-03-01
+- Reorganized the `ScreenshotEditor` top bar into clear task-based action groups: `Edit`, `Project`, `View`, and `Export`.
+- Grouped undo/redo, save/load, focus/theme, and export actions under dedicated sections to reduce command-scanning time for first-time users.
+- Added top-level export controls (`Export PNG`, `Export All`, and conditional `Cancel`) so export flow is discoverable without opening the inspector.

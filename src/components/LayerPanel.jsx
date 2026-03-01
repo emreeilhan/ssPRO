@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 import { TEXT_FONT_OPTIONS, TYPOGRAPHY_SCALES } from '../constants';
+import Button from './ui/Button';
+import { inputBaseClassName } from './ui/Input';
 
 const alignmentModes = ['left', 'center', 'right'];
 const blendModes = [
@@ -36,21 +38,17 @@ function Field({ label, children }) {
 function AccordionSection({ title, isOpen, onToggle, children }) {
   return (
     <section className="rounded-lg bg-zinc-50/70 dark:bg-zinc-900/40">
-      <Button
+      <button
         type="button"
         onClick={onToggle}
         className="flex w-full items-center justify-between px-3 py-2.5 text-left"
       >
         <span className="type-subheading text-zinc-800 dark:text-zinc-200">{title}</span>
         <span className="type-meta">{isOpen ? '-' : '+'}</span>
-      </Button>
+      </button>
       {isOpen && <div className="grid gap-3 px-3 pb-3">{children}</div>}
     </section>
   );
-}
-
-function InputClassName() {
-  return 'hairline rounded-lg bg-white px-2 py-1.5 text-sm text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200';
 }
 
 export default function LayerPanel({
@@ -89,7 +87,7 @@ export default function LayerPanel({
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const inputClassName = InputClassName();
+  const inputClassName = inputBaseClassName;
 
   return (
     <div className="h-full p-3">
@@ -101,7 +99,7 @@ export default function LayerPanel({
         <Button
           type="button"
           onClick={onCollapse}
-          className="btn btn-ghost h-8 w-8 p-0 text-xs"
+          className="h-8 w-8 p-0 text-xs"
           aria-label="Collapse inspector panel"
         >
           {'>'}
@@ -131,7 +129,7 @@ export default function LayerPanel({
                   isSelected ? 'bg-blue-50/80 dark:bg-blue-500/20' : 'bg-white/75 dark:bg-zinc-900/60'
                 }`}
               >
-                <Button type="button" onClick={() => onSelectLayer(layer.id)} className="text-left">
+                <button type="button" onClick={() => onSelectLayer(layer.id)} className="text-left">
                   <div className="flex items-center gap-2">
                     <span
                       className={`inline-flex min-w-8 items-center justify-center rounded px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${meta.tone}`}
@@ -145,33 +143,33 @@ export default function LayerPanel({
                     {layer.locked && <span className="rounded bg-zinc-200 px-1 py-0.5 dark:bg-zinc-700">Locked</span>}
                     {layer.visible === false && <span className="rounded bg-red-100 px-1 py-0.5 text-red-700 dark:bg-red-900/40 dark:text-red-200">Hidden</span>}
                   </div>
-                </Button>
+                </button>
                 <div className="flex gap-1">
                   <Button
                     type="button"
                     onClick={() => onLayerVisibility(layer.id)}
-                    className="btn btn-ghost h-7 px-2 py-0 text-[11px]"
+                    className="h-7 px-2 py-0 text-[11px]"
                   >
                     {layer.visible === false ? 'Show' : 'Hide'}
                   </Button>
                   <Button
                     type="button"
                     onClick={() => onLayerLockToggle(layer.id)}
-                    className="btn btn-ghost h-7 px-2 py-0 text-[11px]"
+                    className="h-7 px-2 py-0 text-[11px]"
                   >
                     {layer.locked ? 'Unlock' : 'Lock'}
                   </Button>
                   <Button
                     type="button"
                     onClick={() => onMoveLayer(layer.id, 'up')}
-                    className="btn btn-ghost h-7 min-w-7 p-0 text-[11px]"
+                    className="h-7 min-w-7 p-0 text-[11px]"
                   >
                     ^
                   </Button>
                   <Button
                     type="button"
                     onClick={() => onMoveLayer(layer.id, 'down')}
-                    className="btn btn-ghost h-7 min-w-7 p-0 text-[11px]"
+                    className="h-7 min-w-7 p-0 text-[11px]"
                   >
                     v
                   </Button>
@@ -190,13 +188,13 @@ export default function LayerPanel({
               <div className="type-meta uppercase">{selectedLayer.type}</div>
             </div>
             <div className="flex gap-1">
-              <Button type="button" onClick={() => onDuplicateLayer(selectedLayer.id)} className="btn btn-ghost text-xs">
+              <Button type="button" onClick={() => onDuplicateLayer(selectedLayer.id)} className="text-xs">
                 Duplicate
               </Button>
-              <Button type="button" onClick={() => onLayerLockToggle(selectedLayer.id)} className="btn btn-ghost text-xs">
+              <Button type="button" onClick={() => onLayerLockToggle(selectedLayer.id)} className="text-xs">
                 {selectedLayer.locked ? 'Unlock' : 'Lock'}
               </Button>
-              <Button type="button" onClick={() => onLayerDelete(selectedLayer.id)} className="btn btn-ghost btn-danger text-xs">
+              <Button type="button" onClick={() => onLayerDelete(selectedLayer.id)} variant="danger" className="text-xs">
                 Delete
               </Button>
             </div>
@@ -245,13 +243,13 @@ export default function LayerPanel({
             </div>
 
             <div className="grid grid-cols-3 gap-1">
-              <Button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center-x')} className="btn btn-ghost text-[11px]">
+              <Button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center-x')} className="text-[11px]">
                 Center X
               </Button>
-              <Button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center-y')} className="btn btn-ghost text-[11px]">
+              <Button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center-y')} className="text-[11px]">
                 Center Y
               </Button>
-              <Button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center')} className="btn btn-ghost text-[11px]">
+              <Button type="button" onClick={() => onAlignLayer(selectedLayer.id, 'center')} className="text-[11px]">
                 Center
               </Button>
             </div>
@@ -284,7 +282,7 @@ export default function LayerPanel({
                     {mode.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
           </AccordionSection>
 
@@ -431,7 +429,7 @@ export default function LayerPanel({
                     <option value="realistic">Realistic</option>
                     <option value="flat">Flat</option>
                     <option value="rounded">Rounded</option>
-                  </select>
+                  </Select>
                 </Field>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -508,7 +506,7 @@ export default function LayerPanel({
                 <Button
                   type="button"
                   onClick={() => mockupUploadRef.current?.click()}
-                  className="btn btn-ghost"
+                  className=""
                 >
                   Upload Screen Image
                 </Button>
@@ -595,7 +593,7 @@ export default function LayerPanel({
                         {fontName}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field label="Text Width">
@@ -667,7 +665,7 @@ export default function LayerPanel({
               <Button
                 type="button"
                 onClick={onCancelExport}
-                className="btn btn-ghost btn-danger mt-1"
+                variant="danger" className="mt-1"
               >
                 Cancel Export
               </Button>
@@ -675,10 +673,10 @@ export default function LayerPanel({
           </div>
         )}
 
-        <Button type="button" onClick={onExportSingle} disabled={isExporting} className="btn btn-ghost">
+        <Button type="button" onClick={onExportSingle} disabled={isExporting} className="">
           {isExporting ? 'Exporting...' : 'Export Active PNG'}
         </Button>
-        <Button type="button" onClick={onExportAll} disabled={isExporting} className="btn btn-primary">
+        <Button type="button" onClick={onExportAll} disabled={isExporting} variant="primary" className="">
           {isExporting ? 'Building ZIP...' : 'Export All (ZIP)'}
         </Button>
         <p className="type-meta">
