@@ -351,3 +351,9 @@
 - Increased canvas visual priority by enlarging preview sizing rules in `CanvasStage` (`width cap 480 -> 620`, `height budget floor 420 -> 560`, and less conservative viewport subtraction).
 - Reduced non-canvas chrome spacing inside `CanvasStage` (container padding, label spacing, helper-text spacing, and nav chip offset) so more vertical space is dedicated to the editable canvas.
 - Verified the update with a successful production build using `npm run build`.
+
+## 0.0.38 - 2026-03-01
+- Compacted the upper workspace area by roughly 30% to prioritize canvas space: reduced topbar padding/gaps, heading scale, metadata typography, action-group spacing, and status-chip sizing.
+- Made the `Background` control strip denser in `ScreenshotEditor` by tightening section spacing, shrinking select/color controls, and switching key actions (`Upload`, `Add Text`, `Compare`, `Safe Area`, `More`) to `sm` button sizing.
+- Added `topbar-status--error` truncation so long autosave errors no longer expand header height unexpectedly.
+- Verified the update with a successful production build using `npm run build`.

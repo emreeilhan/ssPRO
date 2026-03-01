@@ -536,7 +536,11 @@ export default function ScreenshotEditor({
             Screenshot {formatScreenshotNumber(activeScreenshotIndex)} · {activeScreenshot.layers.length} layers
             </span>
             <span className="topbar-status">{autosaveLabel}</span>
-            {autosaveError && <span className="topbar-status text-red-600 dark:text-red-300">{autosaveError}</span>}
+            {autosaveError && (
+              <span className="topbar-status topbar-status--error text-red-600 dark:text-red-300" title={autosaveError}>
+                {autosaveError}
+              </span>
+            )}
           </div>
         </div>
         </header>
@@ -546,14 +550,14 @@ export default function ScreenshotEditor({
           style={{ '--right-pane': rightPaneWidth }}
         >
 
-        <section className="workspace-primary p-4">
-          <div className="divider mb-4 grid gap-2 pb-4 xl:grid-cols-[auto_auto_auto_auto_auto_1fr] xl:items-center">
-            <div className="flex flex-wrap items-center gap-2">
+        <section className="workspace-primary p-3">
+          <div className="divider mb-3 grid gap-1.5 pb-3 xl:grid-cols-[auto_auto_auto_auto_auto_1fr] xl:items-center">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="type-meta uppercase text-zinc-600 dark:text-zinc-200">Background</span>
               <Select
                 value={background.type}
                 onChange={(event) => onBackgroundTypeChange(event.target.value)}
-                className="h-8 min-w-[94px] px-2 py-0 text-xs"
+                className="h-7 min-w-[88px] px-2 py-0 text-xs"
               >
                 {BACKGROUND_TYPES.map((item) => (
                   <option key={item.id} value={item.id}>{item.label}</option>
@@ -563,7 +567,7 @@ export default function ScreenshotEditor({
                 type="color"
                 value={background.color}
                 onChange={(event) => onBackgroundChange(event.target.value)}
-                className="hairline h-8 w-10 rounded-md bg-white"
+                className="hairline h-7 w-9 rounded-md bg-white"
                 title="Primary background color"
               />
               {background.type !== 'solid' && (
@@ -572,11 +576,11 @@ export default function ScreenshotEditor({
                     type="color"
                     value={background.color2}
                     onChange={(event) => onBackgroundSecondaryChange(event.target.value)}
-                    className="hairline h-8 w-10 rounded-md bg-white"
+                    className="hairline h-7 w-9 rounded-md bg-white"
                     title="Secondary background color"
                   />
                   {background.type === 'linear' && (
-                    <label className="type-meta flex items-center gap-2">
+                    <label className="type-meta flex items-center gap-1.5">
                       Angle
                       <input
                         type="range"
@@ -594,9 +598,10 @@ export default function ScreenshotEditor({
               )}
             </div>
 
-            <Button variant="ghost" onClick={openFileDialog}>Upload</Button>
-            <Button variant="ghost" onClick={onAddTextLayer}>Add Text</Button>
+            <Button variant="ghost" size="sm" onClick={openFileDialog}>Upload</Button>
+            <Button variant="ghost" size="sm" onClick={onAddTextLayer}>Add Text</Button>
             <Button variant="ghost"
+              size="sm"
               onClick={() => setIsCompareMode((prev) => !prev)}
               className={isCompareMode ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-400/60 dark:bg-blue-500/24 dark:text-blue-100' : ''}
             >
@@ -604,15 +609,16 @@ export default function ScreenshotEditor({
             </Button>
 
             <Button variant="ghost"
+              size="sm"
               onClick={() => setShowSafeArea((prev) => !prev)}
               className={showSafeArea ? 'border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-400/60 dark:bg-blue-500/24 dark:text-blue-100' : ''}
             >
               Safe Area
             </Button>
 
-            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
               <div ref={moreMenuRef} className="relative">
-                <Button variant="ghost" onClick={() => setIsMoreMenuOpen((prev) => !prev)}>
+                <Button variant="ghost" size="sm" onClick={() => setIsMoreMenuOpen((prev) => !prev)}>
                   More
                 </Button>
                 {isMoreMenuOpen && (
