@@ -362,3 +362,17 @@
 - Fixed inspector panel recoverability bug: after collapse, expand control now remains visible by applying `collapse-rail--visible` to the right panel in collapsed state.
 - Updated right inspector to use the same animated body/rail visibility structure as the left sidebar, preventing “lost panel” state.
 - Verified the fix with a successful production build using `npm run build`.
+
+## 0.0.40 - 2026-03-01
+- Applied task-focused topbar overflow pattern in `src/components/ScreenshotEditor.jsx`: each main group now keeps 2 primary visible actions and routes secondary actions through a `More` menu.
+- Added reusable `TopbarMoreMenu` component with outside-click dismissal and single-open-menu behavior to reduce command crowding while preserving access to advanced actions.
+- Moved tertiary export flow (`Cancel Export`) into `Export > More` to keep top-level export decisions simpler during first-time use.
+
+## 0.0.41 - 2026-03-01
+- Replaced static Quick Start suggestion cards with an interactive 3-step checklist in `src/components/ScreenshotEditor.jsx`.
+- Added live progress indicator (`x/3 tamamlandi`) and per-step completion states so users can see exactly where they are in the setup flow.
+- Added completion feedback state when all checklist steps are done to guide users toward final export readiness.
+
+## 0.0.42 - 2026-03-01
+- Standardized Quick Start checklist copy in `src/components/ScreenshotEditor.jsx` to English-only locale (titles, hints, progress label, and completion message).
+- Removed remaining Turkish UI fragments in checklist states to maintain single-locale consistency and reduce mixed-language cognitive load.

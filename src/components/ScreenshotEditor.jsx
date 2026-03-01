@@ -54,81 +54,54 @@ function TopbarGroup({ label, children }) {
   );
 }
 
-function buildCoachingActions({ screenshot, onAddTextLayer, onAddDecorLayer, onAddMockupLayer, openFileDialog }) {
+function TopbarMoreMenu({ menuRef, isOpen, onToggle, children, label = 'More' }) {
+  return (
+    <div ref={menuRef} className="relative">
+      <Button variant="ghost" size="sm" className="topbar-btn" onClick={onToggle}>
+        {label}
+      </Button>
+      {isOpen && (
+        <div className="surface-popover hairline absolute right-0 top-10 z-40 grid min-w-[190px] gap-1 rounded-xl bg-white p-2 shadow-sm dark:bg-black">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function buildQuickStartChecklist({ screenshot, onAddTextLayer, onAddDecorLayer, openFileDialog }) {
   const layers = screenshot?.layers || [];
   const hasText = layers.some((layer) => layer.type === 'text');
   const hasImage = layers.some((layer) => layer.type === 'image');
   const hasMockup = layers.some((layer) => layer.type === 'mockup');
+  const hasSupportingDepth = layers.some((layer) => layer.type === 'shape' || layer.type === 'mockup');
 
-  if (!layers.length) {
-    return [
-      {
-        id: 'headline',
-        label: 'Once Baslik Ekle',
-        hint: 'Mesajinizi ilk 2 saniyede okutun.',
-        onClick: onAddTextLayer,
-      },
-      {
-        id: 'visual',
-        label: 'Urun Gorseli Yukle',
-        hint: 'Ekran goruntusu veya app mockup kullanin.',
-        onClick: openFileDialog,
-      },
-      {
-        id: 'depth',
-        label: 'Arka Plan Derinligi',
-        hint: 'Orb ile hizli kontrast ve odak olusturun.',
-        onClick: () => onAddDecorLayer('orb'),
-      },
-    ];
-  }
-
-  if (hasImage && !hasText) {
-    return [
-      {
-        id: 'headline',
-        label: 'Baslik Ekleyin',
-        hint: 'Gorselin anlattigini metinle netlestirin.',
-        onClick: onAddTextLayer,
-      },
-      {
-        id: 'mockup',
-        label: 'Mockup Cercevesi',
-        hint: 'Store vitrini icin daha premium sunum.',
-        onClick: () => onAddMockupLayer('realistic'),
-      },
-    ];
-  }
-
-  if (hasText && !hasImage && !hasMockup) {
-    return [
-      {
-        id: 'visual',
-        label: 'Gorsel Yukleyin',
-        hint: 'Sadece metin yerine urun baglami gosterin.',
-        onClick: openFileDialog,
-      },
-      {
-        id: 'support',
-        label: 'Destekleyici Sekil',
-        hint: 'Glow/Pill ile hiyerarsi guclenir.',
-        onClick: () => onAddDecorLayer('glow'),
-      },
-    ];
-  }
-
-  if (hasText && hasImage && !hasMockup) {
-    return [
-      {
-        id: 'mockup',
-        label: 'Mockup Ekle',
-        hint: 'Final sunuma daha yakin bir onizleme alin.',
-        onClick: () => onAddMockupLayer('realistic'),
-      },
-    ];
-  }
-
-  return [];
+  return [
+    {
+      id: 'headline',
+      title: 'Add headline',
+      hint: 'Make your core message readable in the first 2 seconds.',
+      done: hasText,
+      actionLabel: 'Add Text',
+      onAction: onAddTextLayer,
+    },
+    {
+      id: 'visual',
+      title: 'Upload product visual',
+      hint: 'Use a screenshot or mockup to show product context.',
+      done: hasImage || hasMockup,
+      actionLabel: 'Upload',
+      onAction: openFileDialog,
+    },
+    {
+      id: 'depth',
+      title: 'Add supporting depth',
+      hint: 'Use a shape layer (Orb/Glow) to strengthen visual focus.',
+      done: hasSupportingDepth,
+      actionLabel: 'Add Orb',
+      onAction: () => onAddDecorLayer('orb'),
+    },
+  ];
 }
 
 export default function ScreenshotEditor({
@@ -191,7 +164,11 @@ export default function ScreenshotEditor({
 }) {
   const fileInputRef = useRef(null);
   const projectInputRef = useRef(null);
-  const moreMenuRef = useRef(null);
+  const workspaceMoreMenuRef = useRef(null);
+  const editMoreMenuRef = useRef(null);
+  const projectMoreMenuRef = useRef(null);
+  const viewMoreMenuRef = useRef(null);
+  const exportMoreMenuRef = useRef(null);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [compareScreenshotId, setCompareScreenshotId] = useState(null);
   const [isFocusedMode, setIsFocusedMode] = useState(false);
@@ -199,6 +176,7 @@ export default function ScreenshotEditor({
   const [showCenterGuides, setShowCenterGuides] = useState(false);
   const [showMarginGrid, setShowMarginGrid] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [openTopbarMenu, setOpenTopbarMenu] = useState(null);
   const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
   const [dragScreenshotId, setDragScreenshotId] = useState(null);
@@ -281,19 +259,39 @@ export default function ScreenshotEditor({
   }, []);
 
   useEffect(() => {
-    if (!isMoreMenuOpen) {
+    if (!isMoreMenuOpen && !openTopbarMenu) {
       return undefined;
     }
 
     const handleClickOutside = (event) => {
-      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+      if (workspaceMoreMenuRef.current && !workspaceMoreMenuRef.current.contains(event.target)) {
         setIsMoreMenuOpen(false);
+      }
+
+      if (!openTopbarMenu) {
+        return;
+      }
+
+      const refMap = {
+        edit: editMoreMenuRef,
+        project: projectMoreMenuRef,
+        view: viewMoreMenuRef,
+        export: exportMoreMenuRef,
+      };
+      const activeMenuRef = refMap[openTopbarMenu];
+      if (activeMenuRef?.current && !activeMenuRef.current.contains(event.target)) {
+        setOpenTopbarMenu(null);
       }
     };
 
     window.addEventListener('mousedown', handleClickOutside);
     return () => window.removeEventListener('mousedown', handleClickOutside);
-  }, [isMoreMenuOpen]);
+  }, [isMoreMenuOpen, openTopbarMenu]);
+
+  const toggleTopbarMenu = (menuId) => {
+    setOpenTopbarMenu((prev) => (prev === menuId ? null : menuId));
+    setIsMoreMenuOpen(false);
+  };
 
   if (isBootstrapping) {
     return <EditorSkeleton label="Preparing workspace..." />;
@@ -318,13 +316,15 @@ export default function ScreenshotEditor({
   const background = resolveBackgroundConfig(activeScreenshot);
   const selectedTextLength = selectedLayer?.type === 'text' ? selectedLayer.text.length : 0;
 
-  const coachingActions = buildCoachingActions({
+  const quickStartChecklist = buildQuickStartChecklist({
     screenshot: activeScreenshot,
     onAddTextLayer,
     onAddDecorLayer,
-    onAddMockupLayer,
     openFileDialog,
   });
+  const completedQuickStartCount = quickStartChecklist.filter((step) => step.done).length;
+  const totalQuickStartCount = quickStartChecklist.length;
+  const isQuickStartCompleted = totalQuickStartCount > 0 && completedQuickStartCount === totalQuickStartCount;
 
   const leftPaneWidth = isFocusedMode
     ? '0px'
@@ -480,11 +480,102 @@ export default function ScreenshotEditor({
             <Button variant="ghost" size="sm" className="topbar-btn" onClick={onRedo} disabled={!canRedo}>
               Redo
             </Button>
+            <TopbarMoreMenu
+              menuRef={editMoreMenuRef}
+              isOpen={openTopbarMenu === 'edit'}
+              onToggle={() => toggleTopbarMenu('edit')}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  onAddTextLayer();
+                  setOpenTopbarMenu(null);
+                }}
+              >
+                Add Text Layer
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  openFileDialog();
+                  setOpenTopbarMenu(null);
+                }}
+              >
+                Upload Visual
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  onDuplicateLayer();
+                  setOpenTopbarMenu(null);
+                }}
+                disabled={!selectedLayerId}
+              >
+                Duplicate Layer
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  onLayerDelete();
+                  setOpenTopbarMenu(null);
+                }}
+                disabled={!selectedLayerId}
+              >
+                Delete Layer
+              </Button>
+            </TopbarMoreMenu>
           </TopbarGroup>
 
           <TopbarGroup label="Project">
             <Button variant="ghost" size="sm" className="topbar-btn" onClick={onSaveProject}>Save</Button>
             <Button variant="ghost" size="sm" className="topbar-btn" onClick={openProjectDialog}>Load</Button>
+            <TopbarMoreMenu
+              menuRef={projectMoreMenuRef}
+              isOpen={openTopbarMenu === 'project'}
+              onToggle={() => toggleTopbarMenu('project')}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  onAddScreenshot();
+                  setOpenTopbarMenu(null);
+                }}
+              >
+                Add Screenshot
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  onDuplicateScreenshot();
+                  setOpenTopbarMenu(null);
+                }}
+              >
+                Duplicate Screenshot
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  onDeleteScreenshot();
+                  setOpenTopbarMenu(null);
+                }}
+              >
+                Delete Screenshot
+              </Button>
+            </TopbarMoreMenu>
           </TopbarGroup>
 
           <TopbarGroup label="View">
@@ -498,6 +589,56 @@ export default function ScreenshotEditor({
             <Button variant="ghost" size="sm" className="topbar-btn" onClick={onToggleTheme}>
               {isDarkMode ? 'Light' : 'Dark'}
             </Button>
+            <TopbarMoreMenu
+              menuRef={viewMoreMenuRef}
+              isOpen={openTopbarMenu === 'view'}
+              onToggle={() => toggleTopbarMenu('view')}
+            >
+              <Button
+                variant={isCompareMode ? 'primary' : 'ghost'}
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  setIsCompareMode((prev) => !prev);
+                  setOpenTopbarMenu(null);
+                }}
+              >
+                {isCompareMode ? 'Disable Compare' : 'Enable Compare'}
+              </Button>
+              <Button
+                variant={showSafeArea ? 'primary' : 'ghost'}
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  setShowSafeArea((prev) => !prev);
+                  setOpenTopbarMenu(null);
+                }}
+              >
+                {showSafeArea ? 'Hide Safe Area' : 'Show Safe Area'}
+              </Button>
+              <Button
+                variant={showCenterGuides ? 'primary' : 'ghost'}
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  setShowCenterGuides((prev) => !prev);
+                  setOpenTopbarMenu(null);
+                }}
+              >
+                {showCenterGuides ? 'Hide Center Guides' : 'Show Center Guides'}
+              </Button>
+              <Button
+                variant={showMarginGrid ? 'primary' : 'ghost'}
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  setShowMarginGrid((prev) => !prev);
+                  setOpenTopbarMenu(null);
+                }}
+              >
+                {showMarginGrid ? 'Hide Margin Grid' : 'Show Margin Grid'}
+              </Button>
+            </TopbarMoreMenu>
           </TopbarGroup>
 
           <TopbarGroup label="Export">
@@ -523,11 +664,24 @@ export default function ScreenshotEditor({
             >
               Export All
             </Button>
-            {isExporting && (
-              <Button variant="danger" size="sm" className="topbar-btn" onClick={onCancelExport}>
-                Cancel
+            <TopbarMoreMenu
+              menuRef={exportMoreMenuRef}
+              isOpen={openTopbarMenu === 'export'}
+              onToggle={() => toggleTopbarMenu('export')}
+            >
+              <Button
+                variant="danger"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  onCancelExport();
+                  setOpenTopbarMenu(null);
+                }}
+                disabled={!isExporting}
+              >
+                Cancel Export
               </Button>
-            )}
+            </TopbarMoreMenu>
           </TopbarGroup>
 
           <div className="topbar-status-wrap">
@@ -617,8 +771,15 @@ export default function ScreenshotEditor({
             </Button>
 
             <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-              <div ref={moreMenuRef} className="relative">
-                <Button variant="ghost" size="sm" onClick={() => setIsMoreMenuOpen((prev) => !prev)}>
+              <div ref={workspaceMoreMenuRef} className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsMoreMenuOpen((prev) => !prev);
+                    setOpenTopbarMenu(null);
+                  }}
+                >
                   More
                 </Button>
                 {isMoreMenuOpen && (
@@ -805,24 +966,49 @@ export default function ScreenshotEditor({
             </div>
           )}
 
-          {coachingActions.length > 0 && (
+          {quickStartChecklist.length > 0 && (
             <div className="mb-4 rounded-lg bg-blue-50/60 px-3 py-3 dark:bg-blue-950/30">
-              <p className="type-meta uppercase text-blue-700 dark:text-blue-100">
-                Quick Start Guidance
-              </p>
-              <div className="mt-2 grid gap-2 md:grid-cols-2">
-                {coachingActions.map((action) => (
-                  <Button
-                    key={action.id}
-                    variant="ghost"
-                    onClick={action.onClick}
-                    className="interactive-card hairline w-full rounded-lg bg-white px-3 py-3 text-left transition-colors hover:bg-zinc-50 dark:bg-black dark:hover:bg-white/5"
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="type-meta uppercase text-blue-700 dark:text-blue-100">
+                  Quick Start Checklist
+                </p>
+                <span className="type-meta rounded-md border border-blue-200 bg-white/80 px-2 py-1 text-blue-700 dark:border-blue-400/40 dark:bg-black/40 dark:text-blue-100">
+                  {completedQuickStartCount}/{totalQuickStartCount} completed
+                </span>
+              </div>
+              <div className="mt-2 grid gap-2">
+                {quickStartChecklist.map((step, index) => (
+                  <div
+                    key={step.id}
+                    className={`interactive-card hairline flex items-center justify-between gap-3 rounded-lg px-3 py-3 ${
+                      step.done
+                        ? 'bg-emerald-50/80 dark:bg-emerald-900/20'
+                        : 'bg-white dark:bg-black'
+                    }`}
                   >
-                    <p className="type-subheading text-zinc-900 dark:text-zinc-50">{action.label}</p>
-                    <p className="type-meta mt-1">{action.hint}</p>
-                  </Button>
+                    <div>
+                      <p className="type-subheading text-zinc-900 dark:text-zinc-50">
+                        {index + 1}. {step.title}
+                      </p>
+                      <p className="type-meta mt-1">{step.hint}</p>
+                    </div>
+                    {step.done ? (
+                      <span className="type-meta rounded-md border border-emerald-300 bg-emerald-100 px-2 py-1 text-emerald-700 dark:border-emerald-400/50 dark:bg-emerald-900/40 dark:text-emerald-200">
+                        Done
+                      </span>
+                    ) : (
+                      <Button variant="ghost" size="sm" onClick={step.onAction}>
+                        {step.actionLabel}
+                      </Button>
+                    )}
+                  </div>
                 ))}
               </div>
+              {isQuickStartCompleted && (
+                <p className="type-meta mt-2 text-emerald-700 dark:text-emerald-200">
+                  All steps are complete. You are ready for a final export check.
+                </p>
+              )}
             </div>
           )}
 
