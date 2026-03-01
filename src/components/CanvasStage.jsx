@@ -26,9 +26,11 @@ export default function CanvasStage({
   const [canvasWrapWidth, setCanvasWrapWidth] = useState(620);
   const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight || 900);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [selectionPulse, setSelectionPulse] = useState(null);
   const wheelDeltaRef = useRef(0);
   const wheelLockRef = useRef(false);
   const wheelUnlockTimerRef = useRef(null);
+  const pulseAnimationRef = useRef(null);
 
   useEffect(() => {
     const element = frameRef.current;
@@ -56,6 +58,9 @@ export default function CanvasStage({
     () => () => {
       if (wheelUnlockTimerRef.current) {
         window.clearTimeout(wheelUnlockTimerRef.current);
+      }
+      if (pulseAnimationRef.current) {
+        window.cancelAnimationFrame(pulseAnimationRef.current);
       }
     },
     [],
@@ -101,6 +106,67 @@ export default function CanvasStage({
     transformer.nodes(selectedNode ? [selectedNode] : []);
     transformer.getLayer()?.batchDraw();
   }, [selectedLayerId, screenshot.layers, previewScale]);
+
+  useEffect(() => {
+    if (pulseAnimationRef.current) {
+      window.cancelAnimationFrame(pulseAnimationRef.current);
+      pulseAnimationRef.current = null;
+    }
+
+    if (!selectedLayerId || readOnly) {
+      setSelectionPulse(null);
+      return;
+    }
+
+    const selectedNode = nodeRefs.current[selectedLayerId];
+    if (!selectedNode) {
+      setSelectionPulse(null);
+      return;
+    }
+
+    const box = selectedNode.getClientRect({
+      skipShadow: false,
+      skipStroke: false,
+    });
+    if (!box || box.width <= 0 || box.height <= 0) {
+      setSelectionPulse(null);
+      return;
+    }
+
+    const durationMs = 520;
+    const startTime = performance.now();
+
+    const animatePulse = (now) => {
+      const progress = Math.min((now - startTime) / durationMs, 1);
+      const expand = 4 + progress * 18;
+      const opacity = (1 - progress) * 0.95;
+
+      setSelectionPulse({
+        x: box.x - expand,
+        y: box.y - expand,
+        width: box.width + expand * 2,
+        height: box.height + expand * 2,
+        opacity,
+      });
+
+      if (progress < 1) {
+        pulseAnimationRef.current = window.requestAnimationFrame(animatePulse);
+        return;
+      }
+
+      pulseAnimationRef.current = null;
+      setSelectionPulse(null);
+    };
+
+    pulseAnimationRef.current = window.requestAnimationFrame(animatePulse);
+
+    return () => {
+      if (pulseAnimationRef.current) {
+        window.cancelAnimationFrame(pulseAnimationRef.current);
+        pulseAnimationRef.current = null;
+      }
+    };
+  }, [readOnly, selectedLayerId, previewScale]);
 
   const setNodeRef = (layerId, node) => {
     if (node) {
@@ -217,7 +283,7 @@ export default function CanvasStage({
       }}
       onDragLeave={() => setIsDragActive(false)}
       onDrop={handleDrop}
-      className={`relative rounded-xl p-3 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-900/20' : 'bg-zinc-50/90 dark:bg-zinc-900/40'}`}
+      className={`interactive-card relative rounded-xl p-3 ${isDragActive ? 'bg-blue-50/70 dark:bg-blue-900/20' : 'bg-zinc-50/90 dark:bg-zinc-900/40'}`}
     >
       {!readOnly && (onCyclePrevScreenshot || onCycleNextScreenshot) && (
         <div className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-lg bg-white/90 px-1 py-1 shadow-sm backdrop-blur dark:bg-zinc-900/80">
@@ -269,6 +335,20 @@ export default function CanvasStage({
                 commitTransform,
                 isInteractive: !readOnly,
               }),
+            )}
+
+            {selectionPulse && (
+              <Rect
+                x={selectionPulse.x}
+                y={selectionPulse.y}
+                width={selectionPulse.width}
+                height={selectionPulse.height}
+                stroke="#3b82f6"
+                strokeWidth={2}
+                cornerRadius={12}
+                opacity={selectionPulse.opacity}
+                listening={false}
+              />
             )}
 
             {(showSafeArea || showCenterGuides || showMarginGrid) && (

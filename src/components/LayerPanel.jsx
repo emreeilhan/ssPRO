@@ -133,7 +133,7 @@ export default function LayerPanel({
             return (
               <div
                 key={layer.id}
-                className={`grid grid-cols-[1fr_auto] items-center gap-2 rounded-md px-2 py-2 ${
+                className={`interactive-card grid grid-cols-[1fr_auto] items-center gap-2 rounded-md px-2 py-2 ${
                   isSelected ? 'bg-blue-50/80 dark:bg-blue-500/20' : 'bg-white/75 dark:bg-zinc-900/60'
                 }`}
               >
@@ -697,11 +697,24 @@ export default function LayerPanel({
           </div>
         )}
 
-        <Button type="button" onClick={onExportSingle} disabled={isExporting}>
-          {isExporting ? 'Exporting...' : 'Export Active PNG'}
+        <Button
+          type="button"
+          onClick={onExportSingle}
+          disabled={isExporting}
+          loading={isExporting && exportProgress?.mode === 'single'}
+          loadingLabel="Exporting..."
+        >
+          Export Active PNG
         </Button>
-        <Button type="button" onClick={onExportAll} disabled={isExporting} variant="primary">
-          {isExporting ? 'Building ZIP...' : 'Export All (ZIP)'}
+        <Button
+          type="button"
+          onClick={onExportAll}
+          disabled={isExporting}
+          variant="primary"
+          loading={isExporting && exportProgress?.mode === 'batch'}
+          loadingLabel="Building ZIP..."
+        >
+          Export All (ZIP)
         </Button>
         <p className="type-meta">
           Always exported at 1290x2796 PNG, preview scaling ignored.

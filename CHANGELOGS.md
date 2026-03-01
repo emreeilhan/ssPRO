@@ -243,3 +243,22 @@
 - Upgraded `ScreenshotEditor` background controls with type selector (`Solid`, `Linear`, `Radial`), secondary color + angle controls, and one-click preset chips for faster art direction.
 - Updated layer contrast checks to evaluate against computed background contrast color so warnings remain meaningful when gradients are used.
 - Verified end-to-end behavior with a successful production build using `npm run build`.
+
+## 0.0.21 - 2026-03-01
+- Modernized the main header in `ScreenshotEditor` with a clearer premium layout: identity block, grouped command clusters (`Edit/Project/View/Export`), and compact status pills.
+- Introduced a refreshed header visual system in `src/index.css` with glass-style surface layering, stronger hierarchy, and polished micro-interactions for top-bar controls.
+- Upgraded typography in the app shell to a `Manrope` + `Sora` pairing to improve product-level visual character and readability.
+- Verified changes with a successful production build using `npm run build`.
+
+## 0.0.22 - 2026-03-01
+- Added reusable loading micro-interaction support to `src/components/ui/Button.jsx` with semantic `loading`/`loadingLabel` props, spinner rendering, and `aria-busy` feedback.
+- Expanded interaction feedback in `src/index.css` with stronger `focus-visible` rings, hover/press motion for buttons, and reduced-motion safeguards for accessibility.
+- Introduced animated micro-surface patterns: `interactive-card` (hover lift + focus-within highlight) and `surface-popover` (soft entry animation), then applied them in `ScreenshotEditor`, `LayerPanel`, and `CanvasStage`.
+- Wired real loading states for export actions in top bar and inspector (`single`/`batch` mode aware) so users immediately see which operation is running.
+- Verified all updates with a successful production build using `npm run build`.
+
+## 0.0.21 - 2026-03-01
+- Added a short canvas pulse highlight for selected layers in `CanvasStage` to improve selection clarity.
+- Implemented a transient animated selection ring using the selected Konva node bounding box so users can instantly locate the active layer.
+- Cleans up animation frame resources on selection changes/unmount to keep interactions smooth.
+- Verified behavior with a successful production build using `npm run build`.
