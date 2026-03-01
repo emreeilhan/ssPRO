@@ -302,5 +302,41 @@
 - Verified behavior with a successful production build using `npm run build`.
 
 ## 0.0.28 - 2026-03-01
-- Fixed a runtime React hook-order violation in `src/components/ScreenshotEditor.jsx` by moving conditional early returns (`isBootstrapping` / missing `activeScreenshot`) after all hooks, preventing blank-screen crashes.
-- Verified the fix with a successful production build using `npm run build`.
+- Investigated white-screen behavior and validated current `ScreenshotEditor` hook order against `HEAD` to confirm no net code drift in that file during diagnosis.
+- Re-ran production build verification using `npm run build` while collecting stability context.
+
+## 0.0.29 - 2026-03-01
+- Added a global `AppErrorBoundary` (`src/components/AppErrorBoundary.jsx`) to prevent hard white-screen failures by rendering a recovery UI when runtime errors occur.
+- Added one-click recovery actions (`Clear Autosave + Reload`, `Reload Only`) to quickly recover from local state/schema incompatibilities without manual storage cleanup.
+- Wrapped `App` with `AppErrorBoundary` in `src/main.jsx` to enforce crash containment at the application root.
+- Verified changes with a successful production build using `npm run build`.
+
+## 0.0.31 - 2026-03-01
+- Rebalanced desktop workspace widths to prioritize canvas area by reducing side panels approximately 20% in total (`left: 272px -> 218px`, `right: 344px -> 275px`).
+- Updated layout fallbacks in `src/index.css` and synchronized editor/skeleton panel widths in `src/components/ScreenshotEditor.jsx` for consistent responsive behavior.
+- Verified layout update with a successful production build using `npm run build`.
+
+## 0.0.32 - 2026-03-01
+- Fixed topbar flooding when the left screenshot panel is expanded by adding a conditional stacked-header mode in `src/components/ScreenshotEditor.jsx`.
+- Added `topbar-modern--stacked` behavior in `src/index.css` to force single-column header flow and left-aligned controls under constrained workspace width.
+- Improved control-wrap stability with `align-content: flex-start` for topbar control groups.
+- Verified the update with a successful production build using `npm run build`.
+
+## 0.0.33 - 2026-03-01
+- Converted the editor shell into a single unified workspace frame so sidebar/content/inspector feel like one continuous app surface instead of separate cards.
+- Added `app-shell-unified` styling in `src/index.css` with shared border, shared radius, and shared atmosphere layer, then removed independent card treatment from sidebar and main content wrappers.
+- Replaced card-like separation inside the workspace with structural dividers (`sidebar right divider`, `inspector left divider`) and reduced internal grid gaps to improve Claude-style continuity.
+- Added mobile-safe divider fallbacks for stacked layout (`sidebar bottom divider`, `inspector top divider`).
+- Verified the update with a successful production build using `npm run build`.
+
+## 0.0.34 - 2026-03-01
+- Reduced internal corner radius across unified workspace components to remove floating-card feel and make UI surfaces look embedded.
+- Added scoped geometry flattening under `app-shell-unified` in `src/index.css` for buttons, topbar groups/status chips, interactive cards, popovers, and common rounded utility blocks.
+- Flattened embedded topbar corners and softened eyebrow chip radius for stronger single-surface continuity.
+- Verified the update with a successful production build using `npm run build`.
+
+## 0.0.35 - 2026-03-01
+- Removed outer card framing to make the app feel truly embedded: set root shell padding to `0`, removed unified shell border/radius/shadow, and switched to full-bleed viewport layout.
+- Updated desktop sidebar sticky height to `100vh` so panel behavior remains consistent after outer-frame removal.
+- Preserved internal structure/dividers while eliminating the “website inside a website” perimeter effect.
+- Verified the update with a successful production build using `npm run build`.

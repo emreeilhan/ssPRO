@@ -12,6 +12,9 @@ function formatScreenshotNumber(index) {
   return String(index + 1).padStart(2, '0');
 }
 
+const DESKTOP_LEFT_PANEL_WIDTH = 218;
+const DESKTOP_RIGHT_PANEL_WIDTH = 275;
+
 function SkeletonBlock({ className = '' }) {
   return <div className={`skeleton-block ${className}`.trim()} />;
 }
@@ -24,7 +27,7 @@ function EditorSkeleton({ label = 'Loading editor...' }) {
           <SkeletonBlock className="mb-3 h-7 w-64" />
           <SkeletonBlock className="h-4 w-80" />
         </div>
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_332px]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_275px]">
           <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-4">
             <SkeletonBlock className="mb-3 h-6 w-44" />
             <SkeletonBlock className="mb-3 h-[420px] w-full" />
@@ -323,11 +326,19 @@ export default function ScreenshotEditor({
     openFileDialog,
   });
 
-  const leftPaneWidth = isFocusedMode ? '0px' : isLeftPanelCollapsed ? '52px' : '272px';
-  const rightPaneWidth = isFocusedMode ? '0px' : isRightPanelCollapsed ? '52px' : '344px';
+  const leftPaneWidth = isFocusedMode
+    ? '0px'
+    : isLeftPanelCollapsed
+      ? '52px'
+      : `${DESKTOP_LEFT_PANEL_WIDTH}px`;
+  const rightPaneWidth = isFocusedMode
+    ? '0px'
+    : isRightPanelCollapsed
+      ? '52px'
+      : `${DESKTOP_RIGHT_PANEL_WIDTH}px`;
 
   return (
-    <div className="app-shell app-shell-modern" style={{ '--left-pane': leftPaneWidth }}>
+    <div className="app-shell">
       {uiError && (
         <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-400/40 dark:bg-red-950/35 dark:text-red-100">
           <div className="flex items-start justify-between gap-3">
@@ -340,8 +351,9 @@ export default function ScreenshotEditor({
         </div>
       )}
 
+      <div className="app-shell-modern app-shell-unified" style={{ '--left-pane': leftPaneWidth }}>
       {!isFocusedMode && (
-        <Card as="aside" className="pane-width left-sidebar-shell">
+        <Card as="aside" className="pane-width left-sidebar-shell shell-pane shell-pane--left">
           {isLeftPanelCollapsed ? (
             <div className="collapse-rail">
               <Button variant="ghost"
@@ -451,8 +463,12 @@ export default function ScreenshotEditor({
         </Card>
       )}
 
-      <div className="app-content-shell panel workspace-unified">
-        <header className="topbar topbar-modern topbar-modern--embedded">
+      <div className="app-content-shell panel workspace-unified shell-pane shell-pane--main">
+        <header
+          className={`topbar topbar-modern topbar-modern--embedded ${
+            !isFocusedMode && !isLeftPanelCollapsed ? 'topbar-modern--stacked' : ''
+          }`}
+        >
         <div className="topbar-modern__identity">
           <span className="topbar-eyebrow">Creative Workflow</span>
           <h1 className="type-heading">App Store Screenshot Engine</h1>
@@ -924,6 +940,7 @@ export default function ScreenshotEditor({
           </Card>
         )}
         </main>
+      </div>
       </div>
     </div>
   );
