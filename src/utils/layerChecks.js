@@ -1,4 +1,4 @@
-import { getBackgroundContrastColor } from './backgroundUtils';
+import { getBackgroundContrastColor } from './backgroundUtils.js';
 
 export function estimateTextHeight(layer) {
   const text = layer.text || '';
