@@ -7,7 +7,7 @@ export const DEFAULT_BACKGROUND = {
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-function normalizeHex(input, fallback) {
+export function normalizeHex(input, fallback) {
   if (typeof input !== 'string') {
     return fallback;
   }
