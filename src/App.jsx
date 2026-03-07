@@ -645,7 +645,7 @@ export default function App() {
 
     updateActiveScreenshot((item) => {
       const mockupCount = item.layers.filter((layer) => layer.type === 'mockup').length + 1;
-      const lastImageLayer = [...item.layers].reverse().find((layer) => layer.type === 'image');
+      const lastImageLayer = item.layers.findLast((layer) => layer.type === 'image');
 
       const nextLayer = {
         id: layerId,
