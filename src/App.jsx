@@ -514,7 +514,7 @@ export default function App() {
     const layerId = allocateLayerId();
 
     updateActiveScreenshot((item) => {
-      const textCount = item.layers.filter((layer) => layer.type === 'text').length + 1;
+      const textCount = item.layers.reduce((acc, layer) => acc + (layer.type === 'text' ? 1 : 0), 0) + 1;
 
       const nextLayer = {
         id: layerId,
@@ -609,7 +609,7 @@ export default function App() {
     const preset = buildDecorPreset(kind);
 
     updateActiveScreenshot((item) => {
-      const decorCount = item.layers.filter((layer) => layer.type === 'shape').length + 1;
+      const decorCount = item.layers.reduce((acc, layer) => acc + (layer.type === 'shape' ? 1 : 0), 0) + 1;
 
       const nextLayer = {
         id: layerId,
@@ -644,7 +644,7 @@ export default function App() {
     const preset = buildMockupPreset(style);
 
     updateActiveScreenshot((item) => {
-      const mockupCount = item.layers.filter((layer) => layer.type === 'mockup').length + 1;
+      const mockupCount = item.layers.reduce((acc, layer) => acc + (layer.type === 'mockup' ? 1 : 0), 0) + 1;
       const lastImageLayer = [...item.layers].reverse().find((layer) => layer.type === 'image');
 
       const nextLayer = {
